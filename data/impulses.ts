@@ -1,159 +1,189 @@
 
-import { Impulse, ImpulseHub, BreathingPattern } from '@/types/impulse';
+import { Impulse, ImpulseHub, BreathingPattern, Exercise } from '@/types/impulse';
 
 export const impulses: Impulse[] = [
   {
-    id: 'smoking',
-    name: 'Smoking',
-    icon: 'smoking-rooms', // Material icon
+    id: 'stop-smoking',
+    name: 'Stop Smoking',
+    icon: 'smoke-free', // Material icon
     color: '#1A1A1A',
-    description: 'Manage smoking urges with mindful awareness',
+    description: 'Break free from smoking urges',
   },
   {
-    id: 'gym',
-    name: 'Gym',
-    icon: 'fitness-center', // Material icon
+    id: 'move-body',
+    name: 'Move Your Body',
+    icon: 'directions-run', // Material icon
     color: '#1A1A1A',
-    description: 'Overcome resistance to physical activity',
+    description: 'Activate your physical energy',
   },
   {
-    id: 'overeating',
-    name: 'Eating',
-    icon: 'restaurant', // Material icon
+    id: 'eat-awareness',
+    name: 'Eat With Awareness',
+    icon: 'restaurant-menu', // Material icon
     color: '#1A1A1A',
-    description: 'Build mindful eating habits',
+    description: 'Cultivate mindful eating',
   },
   {
-    id: 'anger',
-    name: 'Anger',
-    icon: 'mood-bad', // Material icon
+    id: 'return-calm',
+    name: 'Return to Calm',
+    icon: 'self-improvement', // Material icon
     color: '#1A1A1A',
-    description: 'Cool down and respond with clarity',
+    description: 'Find your center again',
   },
   {
-    id: 'panic',
-    name: 'Panic',
-    icon: 'warning', // Material icon
+    id: 'steady-breath',
+    name: 'Steady Your Breath',
+    icon: 'air', // Material icon
     color: '#1A1A1A',
-    description: 'Ground yourself in moments of anxiety',
+    description: 'Anchor in your breathing',
   },
   {
-    id: 'scrolling',
-    name: 'Scrolling',
-    icon: 'phone-android', // Material icon
+    id: 'unplug-refocus',
+    name: 'Unplug & Refocus',
+    icon: 'phone-disabled', // Material icon
     color: '#1A1A1A',
-    description: 'Break free from digital loops',
+    description: 'Reclaim your attention',
   },
 ];
 
 export const impulseHubs: Record<string, ImpulseHub> = {
-  smoking: {
-    impulse: 'smoking',
-    triggers: ['Stress', 'After meals', 'Social situations', 'Boredom', 'Morning coffee'],
-    interventions: [
+  'stop-smoking': {
+    impulse: 'stop-smoking',
+    exercises: [
       {
-        type: 'micro',
-        duration: 60,
-        title: 'Urge Surfing',
-        description: 'Notice, breathe, observe the wave',
-        script: [
+        name: 'Urge Surfing',
+        credit: 'Dr. Marlatt',
+        steps: [
           'Notice the urge without judgment',
           'Take a deep breath in through your nose',
           'Observe the sensation like a wave',
           'Watch it rise, peak, and naturally fall',
           'You are not the urge, you are the observer',
+          'The wave is passing',
         ],
       },
       {
-        type: 'short',
-        duration: 240,
-        title: 'Mindful Breathing',
-        description: '4-6 breathing cycles with awareness',
-        script: [
-          'Find a comfortable position',
-          'Place one hand on your chest, one on your belly',
-          'Breathe in slowly for 4 counts',
-          'Hold gently for 2 counts',
-          'Exhale slowly for 6 counts',
-          'Notice the urge becoming smaller',
-          'Repeat 6 times',
-        ],
-      },
-      {
-        type: 'plan',
-        duration: 300,
-        title: 'Delay & Substitute',
-        description: 'Create a new routine',
-        script: [
+        name: 'Delay & Distract',
+        credit: 'CDC',
+        steps: [
           'When the urge hits, delay for 10 minutes',
           'During this time, do something with your hands',
           'Drink a glass of water slowly',
-          'Take a short walk',
-          'Call a friend',
+          'Take a short walk around the room',
+          'Call a friend or loved one',
           'The urge will pass',
         ],
       },
-    ],
-    progress: 0,
-  },
-  gym: {
-    impulse: 'gym',
-    triggers: ['Fatigue', 'Lack of motivation', 'Weather', 'Time pressure', 'Self-doubt'],
-    interventions: [
       {
-        type: 'micro',
-        duration: 120,
-        title: '2-Minute Activation',
-        description: 'Just start moving',
-        script: [
+        name: 'Diaphragmatic Breathing',
+        credit: 'ALA',
+        steps: [
+          'Place one hand on your chest, one on your belly',
+          'Breathe in slowly through your nose for 4 counts',
+          'Feel your belly rise, not your chest',
+          'Hold gently for 2 counts',
+          'Exhale slowly through your mouth for 6 counts',
+          'Repeat this calming rhythm',
+        ],
+      },
+      {
+        name: 'Cognitive Labeling',
+        credit: 'ACT Institute',
+        steps: [
+          'Notice the thought: "I want to smoke"',
+          'Label it: "This is just a thought"',
+          'Observe it without acting on it',
+          'Thoughts are not commands',
+          'You can watch them pass by',
+          'You are in control',
+        ],
+      },
+      {
+        name: 'Hand-to-Heart',
+        credit: 'MBRP',
+        steps: [
+          'Place your hand over your heart',
+          'Feel the warmth and gentle pressure',
+          'Take three slow, deep breaths',
+          'Say to yourself: "This is a moment of difficulty"',
+          'Say: "I am not alone in this struggle"',
+          'Offer yourself compassion',
+        ],
+      },
+    ],
+  },
+  'move-body': {
+    impulse: 'move-body',
+    exercises: [
+      {
+        name: '2-Min Activation',
+        credit: 'BJ Fogg',
+        steps: [
           'Stand up right now',
           'Do 10 jumping jacks',
-          'Or 5 pushups',
+          'Or 5 pushups if you prefer',
           'Or stretch for 2 minutes',
           'Movement creates motivation',
           'Not the other way around',
         ],
       },
       {
-        type: 'short',
-        duration: 240,
-        title: 'Behavioral Activation',
-        description: 'Plan and reward',
-        script: [
-          'Think of the smallest possible workout',
-          'Just 10 minutes counts',
-          'Imagine how you&apos;ll feel after',
-          'Choose your reward',
-          'Put on your workout clothes now',
-          'The hardest part is starting',
+        name: 'Visualization',
+        credit: 'Sports Psych Council',
+        steps: [
+          'Close your eyes',
+          'Imagine yourself exercising',
+          'See yourself feeling strong and energized',
+          'Notice how good it feels to move',
+          'Imagine completing your workout',
+          'Now make it real',
         ],
       },
       {
-        type: 'plan',
-        duration: 300,
-        title: 'Temptation Bundling',
-        description: 'Pair exercise with pleasure',
-        script: [
-          'Choose a podcast or show you love',
-          'Only allow yourself to listen while exercising',
-          'Prepare your gym bag the night before',
-          'Set a specific time and place',
-          'Make it easier than not doing it',
+        name: 'Implementation Intentions',
+        credit: 'Gollwitzer',
+        steps: [
+          'Complete this sentence in your mind:',
+          '"When I feel resistance to exercise..."',
+          '"...I will put on my workout clothes"',
+          'Be specific about when and where',
+          'Make it automatic',
+          'Your future self will thank you',
+        ],
+      },
+      {
+        name: 'Motion Priming',
+        credit: 'Harvard Behavioral Activation',
+        steps: [
+          'Start with the tiniest movement',
+          'Put on one shoe',
+          'Walk to the door',
+          'Step outside for 30 seconds',
+          'Each small action builds momentum',
+          'You&apos;re already moving',
+        ],
+      },
+      {
+        name: 'Readiness Body Scan',
+        credit: 'Jon Kabat-Zinn',
+        steps: [
+          'Scan your body from head to toe',
+          'Notice any tension or tightness',
+          'Breathe into those areas',
+          'Ask: "What does my body need right now?"',
+          'Honor what you discover',
+          'Movement is medicine',
         ],
       },
     ],
-    progress: 0,
   },
-  overeating: {
-    impulse: 'overeating',
-    triggers: ['Emotions', 'Boredom', 'Social pressure', 'Stress', 'Habit'],
-    interventions: [
+  'eat-awareness': {
+    impulse: 'eat-awareness',
+    exercises: [
       {
-        type: 'micro',
-        duration: 60,
-        title: 'Hunger Scale Check',
-        description: 'Rate your hunger 1-10',
-        script: [
+        name: 'Hunger Scale',
+        credit: 'Center for Mindful Eating',
+        steps: [
           'Pause before eating',
           'Rate your hunger from 1 to 10',
           '1 = Starving, 10 = Uncomfortably full',
@@ -163,61 +193,74 @@ export const impulseHubs: Record<string, ImpulseHub> = {
         ],
       },
       {
-        type: 'short',
-        duration: 180,
-        title: 'Savoring Drill',
-        description: 'Eat with full attention',
-        script: [
+        name: '3-Bite Savoring',
+        credit: 'Stanford',
+        steps: [
           'Take one bite of food',
           'Put down your utensil',
           'Close your eyes',
           'Notice the texture, temperature, flavor',
           'Chew slowly, at least 20 times',
-          'Swallow mindfully',
-          'Pause before the next bite',
+          'Swallow mindfully before the next bite',
         ],
       },
       {
-        type: 'plan',
-        duration: 300,
-        title: 'Environment Design',
-        description: 'Set up your space for success',
-        script: [
-          'Keep tempting foods out of sight',
-          'Use smaller plates',
-          'Prepare healthy snacks in advance',
-          'Eat at a table, not in front of screens',
-          'Drink water before meals',
-          'Your environment shapes your choices',
+        name: 'Pause Routine',
+        credit: 'MEI',
+        steps: [
+          'Before eating, take three deep breaths',
+          'Look at your food with curiosity',
+          'Notice the colors, shapes, aromas',
+          'Express gratitude for this nourishment',
+          'Set an intention to eat mindfully',
+          'Now begin',
+        ],
+      },
+      {
+        name: 'Craving Deconstruction',
+        credit: 'MBSR',
+        steps: [
+          'When a craving arises, pause',
+          'Where do you feel it in your body?',
+          'What does it actually feel like?',
+          'Is it hunger, or something else?',
+          'Breathe into the sensation',
+          'Watch it change and soften',
+        ],
+      },
+      {
+        name: '5-Sense Grounding',
+        credit: 'UCLA',
+        steps: [
+          'Before eating, engage all five senses',
+          'See: Notice the colors and presentation',
+          'Smell: Breathe in the aromas',
+          'Touch: Feel the texture and temperature',
+          'Hear: Listen to the sounds as you eat',
+          'Taste: Savor each flavor fully',
         ],
       },
     ],
-    progress: 0,
   },
-  anger: {
-    impulse: 'anger',
-    triggers: ['Frustration', 'Injustice', 'Disrespect', 'Stress', 'Fatigue'],
-    interventions: [
+  'return-calm': {
+    impulse: 'return-calm',
+    exercises: [
       {
-        type: 'micro',
-        duration: 60,
-        title: 'Box Breathing',
-        description: '4-4-4-4 breathing pattern',
-        script: [
+        name: 'Box Breathing',
+        credit: 'Navy SEALs',
+        steps: [
           'Breathe in for 4 counts',
           'Hold for 4 counts',
           'Breathe out for 4 counts',
           'Hold for 4 counts',
-          'Repeat 4 times',
+          'Repeat this square pattern',
           'Feel the heat cooling down',
         ],
       },
       {
-        type: 'short',
-        duration: 240,
-        title: 'Cognitive Reappraisal',
-        description: 'Reframe the situation',
-        script: [
+        name: 'Cognitive Reappraisal',
+        credit: 'Beck Institute',
+        steps: [
           'What story am I telling myself?',
           'Is there another way to see this?',
           'What would I tell a friend?',
@@ -227,86 +270,117 @@ export const impulseHubs: Record<string, ImpulseHub> = {
         ],
       },
       {
-        type: 'plan',
-        duration: 300,
-        title: 'Cooling-Off Routine',
-        description: 'Create space before reacting',
-        script: [
-          'When anger rises, pause',
-          'Say: "I need a moment"',
-          'Step away physically if possible',
-          'Take 10 deep breaths',
-          'Splash cold water on your face',
-          'Return when you&apos;re ready to respond, not react',
+        name: 'Name-It-To-Tame-It',
+        credit: 'Dr. Siegel',
+        steps: [
+          'Name the emotion you&apos;re feeling',
+          'Say it out loud or in your mind',
+          '"I am feeling angry" or "I notice frustration"',
+          'Naming reduces the intensity',
+          'You are not the emotion',
+          'You are the one observing it',
+        ],
+      },
+      {
+        name: 'Cooling-Off Countdown',
+        credit: 'APA',
+        steps: [
+          'Count slowly backwards from 10 to 1',
+          'With each number, release tension',
+          '10... letting go',
+          '9... breathing out',
+          'Continue until you reach 1',
+          'Notice the shift in your body',
+        ],
+      },
+      {
+        name: 'PMR',
+        credit: 'Jacobson',
+        steps: [
+          'Tense your fists, hold for 5 seconds, release',
+          'Tense your shoulders, hold, release',
+          'Tense your face, hold, release',
+          'Tense your stomach, hold, release',
+          'Tense your legs, hold, release',
+          'Feel the wave of relaxation',
         ],
       },
     ],
-    progress: 0,
   },
-  panic: {
-    impulse: 'panic',
-    triggers: ['Crowded spaces', 'Uncertainty', 'Physical sensations', 'Thoughts', 'Memories'],
-    interventions: [
+  'steady-breath': {
+    impulse: 'steady-breath',
+    exercises: [
       {
-        type: 'micro',
-        duration: 90,
-        title: '4-4-8 Breathing + Grounding',
-        description: 'Calm your nervous system',
-        script: [
+        name: '4-4-8',
+        credit: 'Harvard',
+        steps: [
           'Breathe in for 4 counts',
           'Hold for 4 counts',
           'Breathe out for 8 counts',
+          'The long exhale activates calm',
+          'Repeat this pattern',
+          'Feel your nervous system settle',
+        ],
+      },
+      {
+        name: '5-4-3-2-1 Grounding',
+        credit: 'APA',
+        steps: [
           'Name 5 things you can see',
-          '4 things you can touch',
-          '3 things you can hear',
-          '2 things you can smell',
-          '1 thing you can taste',
+          'Name 4 things you can touch',
+          'Name 3 things you can hear',
+          'Name 2 things you can smell',
+          'Name 1 thing you can taste',
+          'You are here, you are safe',
         ],
       },
       {
-        type: 'short',
-        duration: 360,
-        title: 'Progressive Relaxation',
-        description: '6-minute body scan',
-        script: [
-          'Tense your feet, hold, release',
-          'Tense your legs, hold, release',
-          'Tense your stomach, hold, release',
-          'Tense your hands, hold, release',
-          'Tense your shoulders, hold, release',
-          'Tense your face, hold, release',
-          'Feel the wave of calm',
+        name: 'Interoceptive Scan',
+        credit: 'Anxiety Workbook',
+        steps: [
+          'Close your eyes',
+          'Notice your heartbeat',
+          'Feel your breath moving in and out',
+          'Sense the temperature of your skin',
+          'Notice any tension or ease',
+          'You are connected to your body',
         ],
       },
       {
-        type: 'plan',
-        duration: 300,
-        title: 'Emergency Plan',
-        description: 'Prepare for panic moments',
-        script: [
-          'Identify your safe person to call',
-          'Create a calming playlist',
-          'Keep a comfort object with you',
-          'Practice your breathing daily',
-          'Remember: panic is uncomfortable, not dangerous',
-          'It will pass',
+        name: 'Extended Exhale',
+        credit: 'Huberman Lab',
+        steps: [
+          'Breathe in naturally',
+          'Exhale for twice as long',
+          'In for 3, out for 6',
+          'Or in for 4, out for 8',
+          'The extended exhale calms your system',
+          'Continue for several breaths',
+        ],
+      },
+      {
+        name: 'Calm Hand Pressure',
+        credit: 'NIMH',
+        steps: [
+          'Press your thumb into your palm',
+          'Apply gentle, steady pressure',
+          'Hold for 5 seconds',
+          'Release and breathe',
+          'Repeat on the other hand',
+          'This activates your calming response',
         ],
       },
     ],
-    progress: 0,
   },
-  scrolling: {
-    impulse: 'scrolling',
-    triggers: ['Boredom', 'Procrastination', 'Habit', 'FOMO', 'Avoidance'],
-    interventions: [
+  'unplug-refocus': {
+    impulse: 'unplug-refocus',
+    exercises: [
       {
-        type: 'micro',
-        duration: 60,
-        title: 'Break & Breathe',
-        description: '30-60 second pause',
-        script: [
+        name: 'Micro-Pause',
+        credit: 'Digital Wellbeing Inst.',
+        steps: [
           'Put your phone face down',
-          'Take 3 deep breaths',
+          'Take three deep breaths',
           'Look around the room',
           'Notice something you haven&apos;t seen before',
           'Ask: What do I actually need right now?',
@@ -314,36 +388,54 @@ export const impulseHubs: Record<string, ImpulseHub> = {
         ],
       },
       {
-        type: 'short',
-        duration: 180,
-        title: 'App-Free Windows',
-        description: 'Create intentional breaks',
-        script: [
-          'Set a timer for 15 minutes',
-          'Put your phone in another room',
-          'Do one thing with full attention',
-          'Read a page of a book',
-          'Stretch your body',
-          'Look out a window',
+        name: 'Look Away',
+        credit: 'WHO',
+        steps: [
+          'Every 20 minutes, look away from your screen',
+          'Focus on something 20 feet away',
+          'Hold for 20 seconds',
+          'Blink several times',
+          'Roll your shoulders back',
+          'Return refreshed',
+        ],
+      },
+      {
+        name: 'Detachment Conditioning',
+        credit: 'Nir Eyal',
+        steps: [
+          'Before checking your phone, pause',
+          'Ask: "What am I looking for?"',
+          'Is this intentional or automatic?',
+          'Set a timer for 5 minutes',
+          'Do one thing without your phone',
           'Notice how you feel',
         ],
       },
       {
-        type: 'plan',
-        duration: 300,
-        title: 'Usage Insight & Friction',
-        description: 'Design your digital environment',
-        script: [
-          'Check your screen time stats',
-          'Remove social apps from home screen',
-          'Turn off all non-essential notifications',
-          'Use grayscale mode',
-          'Set app time limits',
-          'Make scrolling harder, living easier',
+        name: 'Focus Reset',
+        credit: 'MIT',
+        steps: [
+          'Close all unnecessary tabs and apps',
+          'Take three deep breaths',
+          'Write down your one priority',
+          'Set a timer for 25 minutes',
+          'Work on only that one thing',
+          'Your attention is precious',
+        ],
+      },
+      {
+        name: 'Attention Anchor',
+        credit: 'UCLA',
+        steps: [
+          'Choose an anchor: your breath, a sound, a sensation',
+          'When your mind wanders to your phone',
+          'Gently return to your anchor',
+          'No judgment, just return',
+          'Practice this for 2 minutes',
+          'You are training your attention',
         ],
       },
     ],
-    progress: 0,
   },
 };
 
@@ -389,3 +481,34 @@ export const breathingPatterns: BreathingPattern[] = [
     cycles: 10,
   },
 ];
+
+// User levels with blossom requirements
+export const userLevels = [
+  { level: 1, name: 'Seed', blossoms: 0 },
+  { level: 2, name: 'Sprout', blossoms: 50 },
+  { level: 3, name: 'Leaf', blossoms: 125 },
+  { level: 4, name: 'Stem', blossoms: 250 },
+  { level: 5, name: 'Early Bloom', blossoms: 400 },
+  { level: 6, name: 'Blossom', blossoms: 600 },
+  { level: 7, name: 'Gentle Wind', blossoms: 850 },
+  { level: 8, name: 'Sakura Shade', blossoms: 1100 },
+  { level: 9, name: 'Quiet Garden', blossoms: 1400 },
+  { level: 10, name: 'Zen Grove', blossoms: 1750 },
+  { level: 11, name: 'Calm Mountain', blossoms: 2200 },
+  { level: 12, name: 'Friday Master', blossoms: 2700 },
+];
+
+// Helper function to get current level based on blossoms
+export function getCurrentLevel(blossoms: number): { level: number; name: string; blossoms: number; nextLevel?: { level: number; name: string; blossoms: number } } {
+  let currentLevel = userLevels[0];
+  
+  for (let i = userLevels.length - 1; i >= 0; i--) {
+    if (blossoms >= userLevels[i].blossoms) {
+      currentLevel = userLevels[i];
+      const nextLevel = i < userLevels.length - 1 ? userLevels[i + 1] : undefined;
+      return { ...currentLevel, nextLevel };
+    }
+  }
+  
+  return { ...currentLevel, nextLevel: userLevels[1] };
+}

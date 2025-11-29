@@ -2,17 +2,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, buttonStyles } from '@/styles/commonStyles';
-import { breathingPatterns } from '@/data/impulses';
+import { colors } from '@/styles/commonStyles';
+import { impulses } from '@/data/impulses';
 import BlossomBackground from '@/components/BlossomBackground';
+import { IconSymbol } from '@/components/IconSymbol';
 
 export default function QuickCalmScreen() {
   const router = useRouter();
 
-  const handlePatternPress = (patternId: string) => {
+  const handleHubPress = (hubId: string) => {
+    // Launch first exercise of the hub
     router.push({
-      pathname: '/(tabs)/(home)/breathing',
-      params: { patternId }
+      pathname: '/(tabs)/(home)/exercise',
+      params: { hubId, exerciseIndex: 0 }
     } as any);
   };
 
@@ -25,28 +27,37 @@ export default function QuickCalmScreen() {
         >
           <View style={styles.header}>
             <Text style={styles.title}>Quick Calm</Text>
-            <Text style={styles.subtitle}>Instant relief in 60 seconds or less</Text>
+            <Text style={styles.subtitle}>Instant relief in 2 minutes</Text>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Breathing Patterns</Text>
-            {breathingPatterns.map((pattern, index) => (
-              <React.Fragment key={index}>
-                <TouchableOpacity
-                  style={styles.patternCard}
-                  onPress={() => handlePatternPress(pattern.id)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.patternName}>{pattern.name}</Text>
-                  <Text style={styles.patternDescription}>{pattern.description}</Text>
-                  <View style={styles.patternDetails}>
-                    <Text style={styles.patternDetailText}>
-                      In: {pattern.inhale}s • Out: {pattern.exhale}s
-                    </Text>
-                    <Text style={styles.patternCycles}>{pattern.cycles} cycles</Text>
+            <Text style={styles.sectionTitle}>Choose Your Focus</Text>
+            {impulses.map((impulse, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.hubCard}
+                onPress={() => handleHubPress(impulse.id)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.hubCardLeft}>
+                  <IconSymbol
+                    android_material_icon_name={impulse.icon as any}
+                    ios_icon_name={impulse.icon}
+                    size={28}
+                    color={colors.iconGray}
+                  />
+                  <View style={styles.hubCardText}>
+                    <Text style={styles.hubCardName}>{impulse.name}</Text>
+                    <Text style={styles.hubCardDescription}>{impulse.description}</Text>
                   </View>
-                </TouchableOpacity>
-              </React.Fragment>
+                </View>
+                <IconSymbol
+                  android_material_icon_name="chevron-right"
+                  ios_icon_name="chevron.right"
+                  size={20}
+                  color={colors.iconGray}
+                />
+              </TouchableOpacity>
             ))}
           </View>
 
@@ -95,43 +106,38 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     letterSpacing: -0.3,
   },
-  patternCard: {
+  hubCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: colors.white,
     borderRadius: 14,
-    padding: 24,
-    marginBottom: 16,
+    padding: 20,
+    marginBottom: 12,
     borderWidth: 1.5,
     borderColor: colors.black,
   },
-  patternName: {
-    fontSize: 18,
-    fontWeight: '400',
-    color: colors.black,
-    marginBottom: 8,
-    letterSpacing: 0.2,
-  },
-  patternDescription: {
-    fontSize: 14,
-    fontWeight: '300',
-    color: colors.textSecondary,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  patternDetails: {
+  hubCardLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  patternDetailText: {
-    fontSize: 13,
-    fontWeight: '300',
-    color: colors.textSecondary,
+    gap: 16,
     flex: 1,
   },
-  patternCycles: {
-    fontSize: 13,
-    color: colors.black,
+  hubCardText: {
+    flex: 1,
+  },
+  hubCardName: {
+    fontSize: 16,
     fontWeight: '400',
+    color: colors.black,
+    marginBottom: 4,
+    letterSpacing: 0.2,
+  },
+  hubCardDescription: {
+    fontSize: 13,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   bottomSpacer: {
     height: 40,

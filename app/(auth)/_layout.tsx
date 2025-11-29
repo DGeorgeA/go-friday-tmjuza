@@ -1,0 +1,19 @@
+
+import React from 'react';
+import { Stack } from 'expo-router';
+import { colors } from '@/styles/commonStyles';
+
+export default function AuthLayout() {
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Screen name="login" />
+      <Stack.Screen name="signup" />
+    </Stack>
+  );
+}

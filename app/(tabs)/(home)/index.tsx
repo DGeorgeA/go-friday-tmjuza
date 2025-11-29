@@ -1,15 +1,21 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { colors, buttonStyles } from '@/styles/commonStyles';
+import { colors } from '@/styles/commonStyles';
 import { impulses } from '@/data/impulses';
 import BlossomBackground from '@/components/BlossomBackground';
 import { IconSymbol } from '@/components/IconSymbol';
+import { supabase } from '@/app/integrations/supabase/client';
+import { getCurrentLevel } from '@/data/impulses';
 
 export default function HomeScreen() {
   const router = useRouter();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [streak, setStreak] = useState(0);
+  const [blossoms, setBlossoms] = useState(0);
+  const [levelInfo, setLevelInfo] = useState({ level: 1, name: 'Seed', blossoms: 0 });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -17,14 +23,44 @@ export default function HomeScreen() {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, [fadeAnim]);
+
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        setIsAuthenticated(true);
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile) {
+          setStreak(profile.streak || 0);
+          setBlossoms(profile.blossoms || 0);
+          setLevelInfo(getCurrentLevel(profile.blossoms || 0));
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
 
   const handleImpulsePress = (impulseId: string) => {
-    // Direct launch to intervention (micro tier - index 0)
+    // Direct launch to first exercise (index 0)
     router.push({
-      pathname: '/(tabs)/(home)/intervention',
-      params: { impulseId, tierIndex: 0 }
+      pathname: '/(tabs)/(home)/exercise',
+      params: { hubId: impulseId, exerciseIndex: 0 }
     } as any);
+  };
+
+  const handleAuthPress = () => {
+    router.push('/(auth)/login' as any);
   };
 
   return (
@@ -37,27 +73,39 @@ export default function HomeScreen() {
           <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
             <Text style={styles.logo}>GoFriday</Text>
             <Text style={styles.subtitle}>Calm impulses gently</Text>
-            <Text style={styles.streak}>0-day streak · Start your journey</Text>
+            
+            {isAuthenticated ? (
+              <View style={styles.statsRow}>
+                <Text style={styles.streak}>{streak}-day streak</Text>
+                <Text style={styles.divider}>·</Text>
+                <Text style={styles.level}>{levelInfo.name}</Text>
+                <Text style={styles.divider}>·</Text>
+                <Text style={styles.blossoms}>{blossoms} 🌸</Text>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={handleAuthPress} activeOpacity={0.7}>
+                <Text style={styles.authPrompt}>Sign in to track progress</Text>
+              </TouchableOpacity>
+            )}
           </Animated.View>
 
           <View style={styles.section}>
             <View style={styles.hubsGrid}>
               {impulses.map((impulse, index) => (
-                <React.Fragment key={index}>
-                  <TouchableOpacity
-                    style={styles.hubTile}
-                    onPress={() => handleImpulsePress(impulse.id)}
-                    activeOpacity={0.7}
-                  >
-                    <IconSymbol
-                      android_material_icon_name={impulse.icon as any}
-                      ios_icon_name={impulse.icon}
-                      size={32}
-                      color={colors.iconGray}
-                    />
-                    <Text style={styles.hubName}>{impulse.name}</Text>
-                  </TouchableOpacity>
-                </React.Fragment>
+                <TouchableOpacity
+                  key={index}
+                  style={styles.hubTile}
+                  onPress={() => handleImpulsePress(impulse.id)}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol
+                    android_material_icon_name={impulse.icon as any}
+                    ios_icon_name={impulse.icon}
+                    size={32}
+                    color={colors.iconGray}
+                  />
+                  <Text style={styles.hubName}>{impulse.name}</Text>
+                </TouchableOpacity>
               ))}
             </View>
           </View>
@@ -98,12 +146,41 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     letterSpacing: 0.3,
   },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   streak: {
+    fontSize: 13,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    letterSpacing: 0.2,
+  },
+  divider: {
+    fontSize: 13,
+    fontWeight: '300',
+    color: colors.textSecondary,
+  },
+  level: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.black,
+    letterSpacing: 0.2,
+  },
+  blossoms: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.black,
+    letterSpacing: 0.2,
+  },
+  authPrompt: {
     fontSize: 13,
     fontWeight: '300',
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.2,
+    textDecorationLine: 'underline',
   },
   section: {
     marginBottom: 32,

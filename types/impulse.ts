@@ -1,5 +1,5 @@
 
-export type ImpulseType = 'smoking' | 'gym' | 'overeating' | 'anger' | 'panic' | 'scrolling';
+export type ImpulseType = 'stop-smoking' | 'move-body' | 'eat-awareness' | 'return-calm' | 'steady-breath' | 'unplug-refocus';
 
 export type FridayMood = 'chill' | 'cozy' | 'quiet' | 'energetic';
 
@@ -11,19 +11,15 @@ export interface Impulse {
   description: string;
 }
 
-export interface InterventionTier {
-  type: 'micro' | 'short' | 'plan';
-  duration: number; // in seconds
-  title: string;
-  description: string;
-  script?: string[];
+export interface Exercise {
+  name: string;
+  credit: string;
+  steps: string[];
 }
 
 export interface ImpulseHub {
   impulse: ImpulseType;
-  triggers: string[];
-  interventions: InterventionTier[];
-  progress: number; // 0-100
+  exercises: Exercise[];
 }
 
 export interface UserProfile {
@@ -32,6 +28,8 @@ export interface UserProfile {
   streak: number;
   lastSession?: Date;
   baselineScores: Record<ImpulseType, number>;
+  blossoms: number;
+  level: number;
 }
 
 export interface TriggerLog {
@@ -53,4 +51,10 @@ export interface BreathingPattern {
   exhale: number;
   hold2: number;
   cycles: number;
+}
+
+export interface UserLevel {
+  level: number;
+  name: string;
+  blossoms: number;
 }
