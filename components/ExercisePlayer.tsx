@@ -9,15 +9,14 @@ import {
   ImageBackground,
   Platform,
   AccessibilityInfo,
+  Modal,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/styles/commonStyles';
-import BlossomBackground from '@/components/BlossomBackground';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Timing constants (in milliseconds)
 const STEP_BASE_MS = 2000; // 2 seconds base
-const INTERVAL_DURATION_MS = 5000; // 5 seconds fixed interval
 const ACCENT_PINK = '#FF8DAA';
 const PHOTO_OPACITY = 0.10;
 
@@ -52,18 +51,264 @@ interface Settings {
   resetSlowdownEachSession: boolean;
 }
 
+// Completion Popup Component with Heavy Falling Leaves
+function CompletionPopup({ visible, onDismiss }: { visible: boolean; onDismiss: () => void }) {
+  const blossomAnims = useRef([...Array(30)].map(() => ({
+    translateY: new Animated.Value(-100),
+    translateX: new Animated.Value(0),
+    rotate: new Animated.Value(0),
+    scale: new Animated.Value(1),
+    opacity: new Animated.Value(0),
+  }))).current;
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (visible) {
+      // Fade in the popup
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      // Start heavy falling leaves animation
+      blossomAnims.forEach((anim, index) => {
+        const delay = index * 100; // Stagger the start
+        const duration = 3000 + Math.random() * 2000; // 3-5 seconds
+        const horizontalDrift = (Math.random() - 0.5) * 200; // Random horizontal movement
+
+        setTimeout(() => {
+          Animated.parallel([
+            // Falling animation
+            Animated.timing(anim.translateY, {
+              toValue: 1000,
+              duration,
+              useNativeDriver: true,
+            }),
+            // Horizontal drift
+            Animated.timing(anim.translateX, {
+              toValue: horizontalDrift,
+              duration,
+              useNativeDriver: true,
+            }),
+            // Rotation animation
+            Animated.timing(anim.rotate, {
+              toValue: 360 + Math.random() * 360,
+              duration,
+              useNativeDriver: true,
+            }),
+            // Scale animation
+            Animated.sequence([
+              Animated.timing(anim.scale, {
+                toValue: 1.2,
+                duration: duration / 2,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.scale, {
+                toValue: 0.8,
+                duration: duration / 2,
+                useNativeDriver: true,
+              }),
+            ]),
+            // Opacity animation
+            Animated.sequence([
+              Animated.timing(anim.opacity, {
+                toValue: 0.9,
+                duration: 300,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 0.9,
+                duration: duration - 600,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+              }),
+            ]),
+          ]).start();
+        }, delay);
+      });
+
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => {
+        onDismiss();
+      }, 5000);
+    }
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onDismiss}
+    >
+      <View style={completionStyles.overlay}>
+        {/* Heavy falling pink leaves */}
+        {blossomAnims.map((anim, index) => (
+          <Animated.View
+            key={index}
+            style={[
+              completionStyles.blossomLeaf,
+              {
+                left: `${(index * 7) % 100}%`,
+                top: -50,
+                opacity: anim.opacity,
+                transform: [
+                  { translateY: anim.translateY },
+                  { translateX: anim.translateX },
+                  {
+                    rotate: anim.rotate.interpolate({
+                      inputRange: [0, 360],
+                      outputRange: ['0deg', '360deg'],
+                    }),
+                  },
+                  { scale: anim.scale },
+                ],
+              },
+            ]}
+          >
+            {/* Sakura petal shape */}
+            <View style={completionStyles.petalContainer}>
+              <View style={[completionStyles.petal, completionStyles.petal1]} />
+              <View style={[completionStyles.petal, completionStyles.petal2]} />
+              <View style={[completionStyles.petal, completionStyles.petal3]} />
+              <View style={[completionStyles.petal, completionStyles.petal4]} />
+              <View style={[completionStyles.petal, completionStyles.petal5]} />
+            </View>
+          </Animated.View>
+        ))}
+
+        {/* Completion message */}
+        <Animated.View style={[completionStyles.messageContainer, { opacity: fadeAnim }]}>
+          <Text style={completionStyles.messageText}>
+            衝動を蹴り飛ばし、{'\n'}
+            悟りの道を歩んでいます
+          </Text>
+          <Text style={completionStyles.messageSubtext}>
+            You are on your path of enlightenment{'\n'}
+            by kicking your Impulses hard below belt
+          </Text>
+        </Animated.View>
+
+        {/* Tap to dismiss */}
+        <TouchableOpacity
+          style={completionStyles.dismissButton}
+          onPress={onDismiss}
+          activeOpacity={0.7}
+        >
+          <Text style={completionStyles.dismissText}>Tap to continue</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+}
+
+const completionStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  blossomLeaf: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+  },
+  petalContainer: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  petal: {
+    position: 'absolute',
+    width: 16,
+    height: 24,
+    backgroundColor: ACCENT_PINK,
+    borderRadius: 16,
+  },
+  petal1: {
+    top: 0,
+    left: 12,
+  },
+  petal2: {
+    top: 8,
+    left: 24,
+    transform: [{ rotate: '72deg' }],
+  },
+  petal3: {
+    top: 24,
+    left: 20,
+    transform: [{ rotate: '144deg' }],
+  },
+  petal4: {
+    top: 24,
+    left: 4,
+    transform: [{ rotate: '216deg' }],
+  },
+  petal5: {
+    top: 8,
+    left: 0,
+    transform: [{ rotate: '288deg' }],
+  },
+  messageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+    zIndex: 10,
+  },
+  messageText: {
+    fontSize: 28,
+    fontWeight: '300',
+    color: colors.black,
+    textAlign: 'center',
+    letterSpacing: 1,
+    lineHeight: 42,
+    marginBottom: 24,
+    fontFamily: Platform.OS === 'ios' ? 'Hiragino Sans' : 'Noto Sans JP',
+  },
+  messageSubtext: {
+    fontSize: 14,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+    lineHeight: 22,
+  },
+  dismissButton: {
+    position: 'absolute',
+    bottom: 60,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  dismissText: {
+    fontSize: 14,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    letterSpacing: 0.3,
+  },
+});
+
 export default function ExercisePlayer({
   hub,
   exercises,
   onClose,
   onComplete,
 }: ExercisePlayerProps) {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [remainingSeconds, setRemainingSeconds] = useState(0);
-  const [showInterval, setShowInterval] = useState(false);
-  const [intervalSeconds, setIntervalSeconds] = useState(5);
+  const [stepIndex, setStepIndex] = useState(0);
   const [speedMultiplier, setSpeedMultiplier] = useState(1); // 1, 2, or 3
-  const [isAccelerated, setIsAccelerated] = useState(false); // Long-press mode
+  const [currentDuration, setCurrentDuration] = useState(exercises[0]?.baseDurationSeconds * 1000 || 2000);
+  const [remainingSeconds, setRemainingSeconds] = useState(exercises[0]?.baseDurationSeconds || 2);
+  const [isComplete, setIsComplete] = useState(false);
+  const [showCompletionPopup, setShowCompletionPopup] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     showBackgroundPhotos: true,
     showBlossoms: true,
@@ -75,7 +320,6 @@ export default function ExercisePlayer({
   const breatheAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<Date>(new Date());
@@ -154,13 +398,10 @@ export default function ExercisePlayer({
 
   const clearAllTimers = () => {
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-    if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
   };
 
   const getCurrentDuration = (stepIndex: number): number => {
-    if (isAccelerated) return 1; // 1 second when accelerated
-
     const baseSeconds = exercises[stepIndex]?.baseDurationSeconds || 2;
     return baseSeconds * speedMultiplier;
   };
@@ -171,8 +412,7 @@ export default function ExercisePlayer({
       return;
     }
 
-    setCurrentStepIndex(stepIndex);
-    setShowInterval(false);
+    setStepIndex(stepIndex);
 
     const durationSeconds = getCurrentDuration(stepIndex);
     setRemainingSeconds(durationSeconds);
@@ -195,33 +435,14 @@ export default function ExercisePlayer({
   };
 
   const handleStepComplete = (stepIndex: number) => {
-    // Check if there's a next step
+    // Check if there's a next step - NO MORE 5-SECOND INTERVAL
     if (stepIndex + 1 < exercises.length) {
-      // Show 5-second interval
-      setShowInterval(true);
-      setIntervalSeconds(5);
-      startIntervalCountdown(stepIndex + 1);
+      // Directly start next step
+      startStep(stepIndex + 1);
     } else {
       // No more steps - complete session
       handleSessionComplete();
     }
-  };
-
-  const startIntervalCountdown = (nextStepIndex: number) => {
-    let countdown = 5;
-    setIntervalSeconds(countdown);
-
-    if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
-
-    intervalTimerRef.current = setInterval(() => {
-      countdown -= 1;
-      setIntervalSeconds(countdown);
-
-      if (countdown <= 0) {
-        if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
-        startStep(nextStepIndex);
-      }
-    }, 1000);
   };
 
   const handleSessionComplete = () => {
@@ -230,6 +451,9 @@ export default function ExercisePlayer({
       (new Date().getTime() - sessionStartTimeRef.current.getTime()) / 1000
     );
 
+    setIsComplete(true);
+    setShowCompletionPopup(true);
+
     emitAnalyticsEvent('exercise_completed', {
       hub,
       totalSteps: exercises.length,
@@ -237,9 +461,19 @@ export default function ExercisePlayer({
       timestamp: new Date().toISOString(),
     });
 
+    // Haptic feedback for completion
+    if (Platform.OS !== 'web') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  };
+
+  const handleCompletionDismiss = () => {
+    setShowCompletionPopup(false);
     onComplete({
       completed: true,
-      duration_seconds: duration,
+      duration_seconds: Math.floor(
+        (new Date().getTime() - sessionStartTimeRef.current.getTime()) / 1000
+      ),
       steps_completed: exercises.length,
     });
   };
@@ -257,32 +491,30 @@ export default function ExercisePlayer({
     // Emit analytics event
     emitAnalyticsEvent('exercise_slowdown_changed', {
       hub,
-      exercise_id: exercises[currentStepIndex]?.id,
-      step_index: currentStepIndex,
+      exercise_id: exercises[stepIndex]?.id,
+      step_index: stepIndex,
       oldSpeed: `${oldSpeed}x`,
       newSpeed: `${newSpeed}x`,
       timestamp: new Date().toISOString(),
     });
 
-    // If currently mid-step, update remaining seconds to new duration
-    if (!showInterval) {
-      const newDuration = getCurrentDuration(currentStepIndex);
-      setRemainingSeconds(newDuration);
+    // Update remaining seconds to new duration
+    const newDuration = getCurrentDuration(stepIndex);
+    setRemainingSeconds(newDuration);
 
-      // Restart timer with new duration
-      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    // Restart timer with new duration
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
 
-      let remaining = newDuration;
-      stepTimerRef.current = setInterval(() => {
-        remaining -= 1;
-        setRemainingSeconds(remaining);
+    let remaining = newDuration;
+    stepTimerRef.current = setInterval(() => {
+      remaining -= 1;
+      setRemainingSeconds(remaining);
 
-        if (remaining <= 0) {
-          if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-          handleStepComplete(currentStepIndex);
-        }
-      }, 1000);
-    }
+      if (remaining <= 0) {
+        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+        handleStepComplete(stepIndex);
+      }
+    }, 1000);
   };
 
   const handleFastForwardPress = () => {
@@ -314,36 +546,23 @@ export default function ExercisePlayer({
   };
 
   const handleFastForwardSingle = () => {
-    // If in interval, skip to next exercise
-    if (showInterval) {
-      if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
-
-      emitAnalyticsEvent('interval_skipped', {
-        hub,
-        next_exercise_id: exercises[currentStepIndex + 1]?.id,
-        timestamp: new Date().toISOString(),
-      });
-
-      const nextIndex = currentStepIndex + 1;
-      if (nextIndex >= exercises.length) {
-        handleSessionComplete();
-      } else {
-        startStep(nextIndex);
-      }
-      return;
-    }
-
-    // If in exercise, end step and enter interval
     emitAnalyticsEvent('exercise_fastforward', {
       hub,
-      exercise_id: exercises[currentStepIndex]?.id,
-      fromStep: currentStepIndex,
-      toStep: currentStepIndex + 1,
+      exercise_id: exercises[stepIndex]?.id,
+      fromStep: stepIndex,
+      toStep: stepIndex + 1,
       timestamp: new Date().toISOString(),
     });
 
     clearAllTimers();
-    handleStepComplete(currentStepIndex);
+    
+    if (stepIndex + 1 < exercises.length) {
+      // Jump to next step immediately
+      startStep(stepIndex + 1);
+    } else {
+      // Complete session
+      handleSessionComplete();
+    }
   };
 
   const handleFastForwardDouble = () => {
@@ -351,8 +570,8 @@ export default function ExercisePlayer({
 
     emitAnalyticsEvent('exercise_fastforward', {
       hub,
-      exercise_id: exercises[currentStepIndex]?.id,
-      fromStep: currentStepIndex,
+      exercise_id: exercises[stepIndex]?.id,
+      fromStep: stepIndex,
       toStep: exercises.length - 1,
       action: 'double_tap',
       timestamp: new Date().toISOString(),
@@ -372,33 +591,32 @@ export default function ExercisePlayer({
 
     emitAnalyticsEvent('exercise_fastforward', {
       hub,
-      exercise_id: exercises[currentStepIndex]?.id,
-      fromStep: currentStepIndex,
+      exercise_id: exercises[stepIndex]?.id,
+      fromStep: stepIndex,
       toStep: 'accelerated',
       action: 'long_press',
       timestamp: new Date().toISOString(),
     });
 
-    // Set subsequent step durations to 1s
-    setIsAccelerated(true);
+    // Set speed to 1 second per step
+    setSpeedMultiplier(0.5); // This will make steps very fast
 
-    // Restart current step with 1s duration
-    if (!showInterval) {
-      setRemainingSeconds(1);
+    // Restart current step with fast duration
+    const newDuration = 1;
+    setRemainingSeconds(newDuration);
 
-      if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    if (stepTimerRef.current) clearInterval(stepTimerRef.current);
 
-      let remaining = 1;
-      stepTimerRef.current = setInterval(() => {
-        remaining -= 1;
-        setRemainingSeconds(remaining);
+    let remaining = newDuration;
+    stepTimerRef.current = setInterval(() => {
+      remaining -= 1;
+      setRemainingSeconds(remaining);
 
-        if (remaining <= 0) {
-          if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-          handleStepComplete(currentStepIndex);
-        }
-      }, 1000);
-    }
+      if (remaining <= 0) {
+        if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+        handleStepComplete(stepIndex);
+      }
+    }, 1000);
   };
 
   const handleClose = () => {
@@ -409,8 +627,8 @@ export default function ExercisePlayer({
 
     emitAnalyticsEvent('exercise_aborted', {
       hub,
-      exercise_id: exercises[currentStepIndex]?.id,
-      step_index: currentStepIndex,
+      exercise_id: exercises[stepIndex]?.id,
+      step_index: stepIndex,
       timestamp: new Date().toISOString(),
     });
 
@@ -425,11 +643,9 @@ export default function ExercisePlayer({
 
   if (exercises.length === 0) {
     return (
-      <BlossomBackground showBlossoms={settings.showBlossoms}>
-        <View style={styles.container}>
-          <Text style={styles.sessionCompleteText}>Session Complete</Text>
-        </View>
-      </BlossomBackground>
+      <View style={styles.container}>
+        <Text style={styles.sessionCompleteText}>Session Complete</Text>
+      </View>
     );
   }
 
@@ -443,154 +659,104 @@ export default function ExercisePlayer({
     outputRange: [0.4, 1, 0.4],
   });
 
-  const currentStep = exercises[currentStepIndex];
-  const nextStep = exercises[currentStepIndex + 1];
+  const currentStep = exercises[stepIndex];
   const photoUrl = BW_PHOTOS[hub] || BW_PHOTOS.default;
-
-  // Show 5-second interval screen
-  if (showInterval) {
-    return (
-      <BlossomBackground showBlossoms={settings.showBlossoms} showPaperTexture={false}>
-        <View style={styles.container}>
-          {/* B&W Photo Background */}
-          {settings.showBackgroundPhotos && (
-            <ImageBackground
-              source={{ uri: photoUrl }}
-              style={styles.photoBackground}
-              blurRadius={8}
-              imageStyle={styles.photoImage}
-            />
-          )}
-
-          {/* Top-right controls */}
-          <View style={styles.controls}>
-            {/* Fast Forward Button */}
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleFastForwardSingle}
-              activeOpacity={0.7}
-              accessibilityLabel="Fast forward to skip interval"
-              accessibilityRole="button"
-            >
-              <Text style={styles.controlIcon}>⏩</Text>
-            </TouchableOpacity>
-
-            {/* Close Button */}
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleClose}
-              activeOpacity={0.7}
-              accessibilityLabel="Close exercise"
-              accessibilityRole="button"
-            >
-              <Text style={styles.controlIcon}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Animated.View style={[styles.intervalContent, { opacity: fadeAnim }]}>
-            <Text style={styles.intervalCountdownText}>
-              Next step in {intervalSeconds}...
-            </Text>
-            {nextStep && (
-              <Text style={styles.intervalNextText}>Next: {nextStep.text}</Text>
-            )}
-            <Text style={styles.intervalTipText}>Tap ⏩ to skip</Text>
-          </Animated.View>
-        </View>
-      </BlossomBackground>
-    );
-  }
 
   // Show exercise screen
   return (
-    <BlossomBackground showBlossoms={settings.showBlossoms} showPaperTexture={false}>
-      <View style={styles.container}>
-        {/* B&W Photo Background (blurred, low opacity, desaturated) */}
-        {settings.showBackgroundPhotos && (
-          <ImageBackground
-            source={{ uri: photoUrl }}
-            style={styles.photoBackground}
-            blurRadius={8}
-            imageStyle={styles.photoImage}
-          />
-        )}
+    <View style={styles.container}>
+      {/* B&W Photo Background (blurred, low opacity, desaturated) */}
+      {settings.showBackgroundPhotos && (
+        <ImageBackground
+          source={{ uri: photoUrl }}
+          style={styles.photoBackground}
+          blurRadius={8}
+          imageStyle={styles.photoImage}
+        />
+      )}
 
-        {/* Top-right controls - 3 icons horizontally aligned */}
-        <View style={styles.controls}>
-          {/* Slowdown Button */}
-          <View style={styles.controlButtonContainer}>
-            <TouchableOpacity
-              style={styles.controlButton}
-              onPress={handleSlowdown}
-              activeOpacity={0.7}
-              accessibilityLabel={`Slowdown speed, currently ${speedMultiplier}x`}
-              accessibilityRole="button"
-            >
-              <Text style={styles.controlIcon}>⏪</Text>
-            </TouchableOpacity>
-            <Text style={styles.speedIndicator}>{speedMultiplier}x</Text>
-          </View>
+      {/* Completion Popup */}
+      <CompletionPopup
+        visible={showCompletionPopup}
+        onDismiss={handleCompletionDismiss}
+      />
 
-          {/* Fast Forward Button */}
+      {/* Top-right controls - Minimalistic Japanese style */}
+      <View style={styles.controls}>
+        {/* Slowdown Button */}
+        <View style={styles.controlButtonContainer}>
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={handleFastForwardPress}
-            onLongPress={handleFastForwardLongPress}
-            delayLongPress={500}
+            onPress={handleSlowdown}
             activeOpacity={0.7}
-            accessibilityLabel="Fast forward to next step"
+            accessibilityLabel={`Slowdown speed, currently ${speedMultiplier}x`}
             accessibilityRole="button"
           >
-            <Text style={styles.controlIcon}>⏩</Text>
+            <Text style={styles.controlIcon}>⏪</Text>
           </TouchableOpacity>
-
-          {/* Close Button */}
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={handleClose}
-            activeOpacity={0.7}
-            accessibilityLabel="Close exercise"
-            accessibilityRole="button"
-          >
-            <Text style={styles.controlIcon}>✕</Text>
-          </TouchableOpacity>
+          <Text style={styles.speedIndicator}>{speedMultiplier}x</Text>
         </View>
 
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          {/* Large breathing circle */}
-          <View style={styles.breathingContainer}>
-            {reducedMotion ? (
-              <View style={styles.breathingCircleStatic} />
-            ) : (
-              <Animated.View
-                style={[
-                  styles.breathingCircle,
-                  {
-                    transform: [{ scale }],
-                    opacity,
-                  },
-                ]}
-              />
-            )}
-          </View>
+        {/* Fast Forward Button */}
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={handleFastForwardPress}
+          onLongPress={handleFastForwardLongPress}
+          delayLongPress={500}
+          activeOpacity={0.7}
+          accessibilityLabel="Fast forward to next step"
+          accessibilityRole="button"
+        >
+          <Text style={styles.controlIcon}>⏩</Text>
+        </TouchableOpacity>
 
-          {/* Current task label */}
-          <Text style={styles.currentTaskLabel}>Current task</Text>
-
-          {/* Task text */}
-          <Text style={styles.taskText}>{currentStep.text}</Text>
-
-          {/* Time left */}
-          <Text style={styles.timeLeftText}>{remainingSeconds} s left</Text>
-        </Animated.View>
+        {/* Close Button */}
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={handleClose}
+          activeOpacity={0.7}
+          accessibilityLabel="Close exercise"
+          accessibilityRole="button"
+        >
+          <Text style={styles.controlIcon}>✕</Text>
+        </TouchableOpacity>
       </View>
-    </BlossomBackground>
+
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        {/* Large breathing circle */}
+        <View style={styles.breathingContainer}>
+          {reducedMotion ? (
+            <View style={styles.breathingCircleStatic} />
+          ) : (
+            <Animated.View
+              style={[
+                styles.breathingCircle,
+                {
+                  transform: [{ scale }],
+                  opacity,
+                },
+              ]}
+            />
+          )}
+        </View>
+
+        {/* Current task label */}
+        <Text style={styles.currentTaskLabel}>Current task</Text>
+
+        {/* Task text */}
+        <Text style={styles.taskText}>{currentStep.text}</Text>
+
+        {/* Time left */}
+        <Text style={styles.timeLeftText}>{remainingSeconds} s left</Text>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.white,
   },
   photoBackground: {
     position: 'absolute',
@@ -610,15 +776,15 @@ const styles = StyleSheet.create({
     top: 60,
     right: 24,
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     zIndex: 10,
   },
   controlButtonContainer: {
     alignItems: 'center',
   },
   controlButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 0,
     backgroundColor: 'transparent',
     alignItems: 'center',
@@ -627,13 +793,14 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   controlIcon: {
-    fontSize: 24,
+    fontSize: 22,
     color: colors.black,
+    fontWeight: '300',
   },
   speedIndicator: {
-    fontSize: 11,
-    fontWeight: '400',
-    color: colors.black,
+    fontSize: 10,
+    fontWeight: '300',
+    color: colors.textSecondary,
     marginTop: 2,
     letterSpacing: 0.3,
   },
@@ -642,36 +809,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-  },
-  intervalContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  intervalCountdownText: {
-    fontSize: 28,
-    fontWeight: '300',
-    color: colors.black,
-    textAlign: 'center',
-    letterSpacing: 0.5,
-    marginBottom: 24,
-  },
-  intervalNextText: {
-    fontSize: 16,
-    fontWeight: '300',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.3,
-    marginBottom: 16,
-  },
-  intervalTipText: {
-    fontSize: 13,
-    fontWeight: '300',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.3,
-    opacity: 0.6,
   },
   breathingContainer: {
     alignItems: 'center',
@@ -682,31 +819,31 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    borderWidth: 2,
-    borderColor: '#111',
+    borderWidth: 1.5,
+    borderColor: colors.black,
     backgroundColor: 'transparent',
   },
   breathingCircleStatic: {
     width: 140,
     height: 140,
     borderRadius: 70,
-    borderWidth: 2,
-    borderColor: '#111',
+    borderWidth: 1.5,
+    borderColor: colors.black,
     backgroundColor: 'transparent',
     opacity: 0.7,
   },
   currentTaskLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '300',
     color: colors.textSecondary,
     textAlign: 'center',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
   taskText: {
     fontSize: 20,
-    fontWeight: '400',
+    fontWeight: '300',
     color: colors.black,
     textAlign: 'center',
     lineHeight: 32,
@@ -716,7 +853,7 @@ const styles = StyleSheet.create({
   },
   timeLeftText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '400',
     color: colors.black,
     textAlign: 'center',
     letterSpacing: 0.5,
