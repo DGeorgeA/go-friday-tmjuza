@@ -71,7 +71,7 @@ export default function ExerciseScreen() {
         clearTimeout(stepTimerRef.current);
       }
     };
-  }, []);
+  }, [breatheAnim, fadeAnim]);
 
   const startAutoProgress = () => {
     if (!exercise) return;
@@ -426,6 +426,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.black,
     letterSpacing: 0.5,
+    fontFamily: 'NotoSansJP_300Light',
   },
   content: {
     flex: 1,
@@ -454,6 +455,7 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     letterSpacing: 0.3,
     marginBottom: 40,
+    fontFamily: 'NotoSansJP_300Light',
   },
   creditText: {
     position: 'absolute',
@@ -463,6 +465,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   feedbackContainer: {
     flex: 1,
@@ -477,6 +480,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 48,
     letterSpacing: 0.3,
+    fontFamily: 'NotoSansJP_300Light',
   },
   dotsContainer: {
     flexDirection: 'row',
@@ -506,11 +510,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.2,
     marginBottom: 60,
+    fontFamily: 'NotoSansJP_300Light',
   },
   errorText: {
     fontSize: 15,
     fontWeight: '300',
     color: colors.black,
     textAlign: 'center',
+    fontFamily: 'NotoSansJP_300Light',
   },
 });

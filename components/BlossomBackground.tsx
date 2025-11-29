@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, ImageBackground } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 
 interface BlossomBackgroundProps {
@@ -64,7 +64,7 @@ export default function BlossomBackground({ children, showPaperTexture = true }:
         ).start();
       }, index * 1500);
     });
-  }, []);
+  }, [blossomAnims]);
 
   return (
     <View style={styles.container}>

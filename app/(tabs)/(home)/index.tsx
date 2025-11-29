@@ -27,7 +27,7 @@ export default function HomeScreen() {
     }).start();
 
     loadUserData();
-  }, []);
+  }, [fadeAnim]);
 
   const loadUserData = async () => {
     try {
@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 16,
     letterSpacing: -1,
+    fontFamily: 'NotoSerifJP_700Bold', // Traditional Japanese font
   },
   subtitle: {
     fontSize: 15,
@@ -164,6 +165,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
     letterSpacing: 0.3,
+    fontFamily: 'NotoSansJP_300Light',
   },
   statsRow: {
     flexDirection: 'row',
@@ -175,6 +177,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.textSecondary,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   authPrompt: {
     fontSize: 13,
@@ -183,6 +186,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.2,
     textDecorationLine: 'underline',
+    fontFamily: 'NotoSansJP_300Light',
   },
   section: {
     marginBottom: 32,
@@ -211,6 +215,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_400Regular',
   },
   bottomSpacer: {
     height: 40,

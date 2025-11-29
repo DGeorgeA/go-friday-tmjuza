@@ -17,6 +17,14 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
 import { supabase } from "@/app/integrations/supabase/client";
+import {
+  NotoSerifJP_400Regular,
+  NotoSerifJP_700Bold,
+} from "@expo-google-fonts/noto-serif-jp";
+import {
+  NotoSansJP_300Light,
+  NotoSansJP_400Regular,
+} from "@expo-google-fonts/noto-sans-jp";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -30,6 +38,10 @@ export default function RootLayout() {
   const networkState = useNetworkState();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    NotoSerifJP_400Regular,
+    NotoSerifJP_700Bold,
+    NotoSansJP_300Light,
+    NotoSansJP_400Regular,
   });
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
 
