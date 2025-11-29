@@ -1,5 +1,4 @@
-# Friday Calm
+Go Friday - World's first Impulse manager app
 
-This app was built using [Natively.dev](https://natively.dev) - a platform for creating mobile apps.
 
 Made with 💙 for creativity.
