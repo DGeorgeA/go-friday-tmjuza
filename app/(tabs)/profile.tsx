@@ -1,91 +1,145 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/IconSymbol";
-import { GlassView } from "expo-glass-effect";
-import { useTheme } from "@react-navigation/native";
+
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { colors, commonStyles } from '@/styles/commonStyles';
 
 export default function ProfileScreen() {
-  const theme = useTheme();
-
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]} edges={['top']}>
+    <View style={[styles.container, { backgroundColor: colors.blossomPink }]}>
       <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.contentContainer,
-          Platform.OS !== 'ios' && styles.contentContainerWithTabBar
-        ]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <GlassView style={[
-          styles.profileHeader,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <IconSymbol ios_icon_name="person.circle.fill" android_material_icon_name="person" size={80} color={theme.colors.primary} />
-          <Text style={[styles.name, { color: theme.colors.text }]}>John Doe</Text>
-          <Text style={[styles.email, { color: theme.dark ? '#98989D' : '#666' }]}>john.doe@example.com</Text>
-        </GlassView>
+        <View style={styles.header}>
+          <Text style={styles.icon}>👤</Text>
+          <Text style={styles.title}>Profile</Text>
+        </View>
 
-        <GlassView style={[
-          styles.section,
-          Platform.OS !== 'ios' && { backgroundColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }
-        ]} glassEffectStyle="regular">
-          <View style={styles.infoRow}>
-            <IconSymbol ios_icon_name="phone.fill" android_material_icon_name="phone" size={20} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.infoText, { color: theme.colors.text }]}>+1 (555) 123-4567</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Your Progress</Text>
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Current Streak</Text>
+            <Text style={styles.statValue}>0 days 🔥</Text>
           </View>
-          <View style={styles.infoRow}>
-            <IconSymbol ios_icon_name="location.fill" android_material_icon_name="location-on" size={20} color={theme.dark ? '#98989D' : '#666'} />
-            <Text style={[styles.infoText, { color: theme.colors.text }]}>San Francisco, CA</Text>
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Total Sessions</Text>
+            <Text style={styles.statValue}>0</Text>
           </View>
-        </GlassView>
+          <View style={styles.statRow}>
+            <Text style={styles.statLabel}>Time Practiced</Text>
+            <Text style={styles.statValue}>0 minutes</Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Settings</Text>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>Notifications</Text>
+            <Text style={styles.settingValue}>Off</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>Sound Effects</Text>
+            <Text style={styles.settingValue}>On</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.settingItem}>
+            <Text style={styles.settingText}>Haptic Feedback</Text>
+            <Text style={styles.settingValue}>On</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>About GoFriday</Text>
+          <Text style={styles.aboutText}>
+            GoFriday helps you manage negative impulses through evidence-based techniques 
+            including CBT, ACT, Urge Surfing, and mindfulness practices.
+          </Text>
+          <Text style={styles.versionText}>Version 1.0.0</Text>
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    // backgroundColor handled dynamically
-  },
   container: {
     flex: 1,
   },
-  contentContainer: {
-    padding: 20,
+  scrollContent: {
+    paddingTop: 60,
+    paddingHorizontal: 24,
+    paddingBottom: 120,
   },
-  contentContainerWithTabBar: {
-    paddingBottom: 100, // Extra padding for floating tab bar
-  },
-  profileHeader: {
+  header: {
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 32,
+    marginBottom: 32,
+  },
+  icon: {
+    fontSize: 64,
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: colors.charcoal,
+    letterSpacing: -0.5,
+  },
+  card: {
+    backgroundColor: colors.white,
+    borderRadius: 20,
+    padding: 24,
     marginBottom: 16,
-    gap: 12,
+    boxShadow: '0px 4px 12px rgba(43, 43, 47, 0.08)',
+    elevation: 3,
   },
-  name: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    // color handled dynamically
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.charcoal,
+    marginBottom: 16,
   },
-  email: {
-    fontSize: 16,
-    // color handled dynamically
-  },
-  section: {
-    borderRadius: 12,
-    padding: 20,
-    gap: 12,
-  },
-  infoRow: {
+  statRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  infoText: {
+  statLabel: {
     fontSize: 16,
-    // color handled dynamically
+    color: colors.charcoal,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.charcoal,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  settingText: {
+    fontSize: 16,
+    color: colors.charcoal,
+  },
+  settingValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.warmPink,
+  },
+  aboutText: {
+    fontSize: 14,
+    color: colors.charcoal,
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  versionText: {
+    fontSize: 12,
+    color: colors.charcoal,
+    opacity: 0.5,
   },
 });
