@@ -2,38 +2,33 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
-// Minimalistic Black & White Theme with Pink Blossom accents
+// Monochrome Japanese Zen Theme
 export const colors = {
-  // Primary colors - Black & White
-  black: '#000000',
+  // Primary colors - Pure Monochrome
   white: '#FFFFFF',
+  black: '#1A1A1A', // Deep charcoal black
   
-  // Accent - Pink Blossom (subtle)
-  blossomPink: '#F7D7E3',
-  accentPink: '#FF8DAA',
-  
-  // Grays for depth
-  lightGray: '#F5F5F5',
-  mediumGray: '#E0E0E0',
-  darkGray: '#333333',
+  // Grays for depth and icons
+  iconGray: '#4A4A4A', // Black/gray for icons
+  textSecondary: '#6B6B6B', // Light gray for secondary text
+  border: '#E5E5E5', // Subtle border
+  blossomGray: 'rgba(0, 0, 0, 0.08)', // 8-12% opacity neutral gray for blossoms
   
   // Semantic colors
   background: '#FFFFFF',
-  text: '#000000',
-  textSecondary: '#666666',
-  border: '#E0E0E0',
+  text: '#1A1A1A',
   
-  // Status colors
-  danger: '#FF3B30',
-  success: '#34C759',
+  // Status colors (minimal use)
+  danger: '#1A1A1A',
+  success: '#1A1A1A',
 };
 
 export const buttonStyles = StyleSheet.create({
   primaryButton: {
     backgroundColor: colors.black,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -41,14 +36,14 @@ export const buttonStyles = StyleSheet.create({
   primaryButtonText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontWeight: '300', // Light weight for Zen design
+    letterSpacing: 0.5,
   },
   secondaryButton: {
     backgroundColor: colors.white,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -58,36 +53,29 @@ export const buttonStyles = StyleSheet.create({
   secondaryButtonText: {
     color: colors.black,
     fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontWeight: '300', // Light weight for Zen design
+    letterSpacing: 0.5,
   },
-  panicButton: {
-    backgroundColor: colors.danger,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+  floatingButton: {
+    backgroundColor: colors.white,
+    paddingVertical: 18,
+    paddingHorizontal: 28,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: colors.black,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  panicButtonText: {
-    color: colors.white,
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  smallButton: {
-    backgroundColor: colors.black,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  smallButtonText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: '600',
+  floatingButtonText: {
+    color: colors.black,
+    fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0.5,
   },
 });
 
@@ -109,47 +97,48 @@ export const commonStyles = StyleSheet.create({
     justifyContent: 'center',
     maxWidth: 800,
     width: '100%',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 32,
+    fontWeight: '700', // Bold for main titles
     textAlign: 'center',
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '300', // Light weight
     textAlign: 'center',
     color: colors.textSecondary,
-    marginBottom: 10,
-    letterSpacing: -0.3,
+    marginBottom: 12,
+    letterSpacing: 0.3,
+    lineHeight: 24,
   },
   text: {
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '300', // Light weight
     color: colors.text,
     marginBottom: 8,
-    lineHeight: 22,
+    lineHeight: 24,
     textAlign: 'center',
   },
   section: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: 24,
+    marginBottom: 32, // Large breathing space
   },
   buttonContainer: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 18,
+    borderRadius: 14,
+    padding: 24,
     marginVertical: 8,
     width: '100%',
     borderWidth: 1,

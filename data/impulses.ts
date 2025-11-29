@@ -5,43 +5,43 @@ export const impulses: Impulse[] = [
   {
     id: 'smoking',
     name: 'Smoking',
-    icon: '🚬',
-    color: '#000000',
+    icon: 'smoking-rooms', // Material icon
+    color: '#1A1A1A',
     description: 'Manage smoking urges with mindful awareness',
   },
   {
     id: 'gym',
     name: 'Gym',
-    icon: '💪',
-    color: '#000000',
+    icon: 'fitness-center', // Material icon
+    color: '#1A1A1A',
     description: 'Overcome resistance to physical activity',
   },
   {
     id: 'overeating',
     name: 'Eating',
-    icon: '🍽️',
-    color: '#000000',
+    icon: 'restaurant', // Material icon
+    color: '#1A1A1A',
     description: 'Build mindful eating habits',
   },
   {
     id: 'anger',
     name: 'Anger',
-    icon: '😤',
-    color: '#000000',
+    icon: 'mood-bad', // Material icon
+    color: '#1A1A1A',
     description: 'Cool down and respond with clarity',
   },
   {
     id: 'panic',
     name: 'Panic',
-    icon: '😰',
-    color: '#000000',
+    icon: 'warning', // Material icon
+    color: '#1A1A1A',
     description: 'Ground yourself in moments of anxiety',
   },
   {
     id: 'scrolling',
     name: 'Scrolling',
-    icon: '📱',
-    color: '#000000',
+    icon: 'phone-android', // Material icon
+    color: '#1A1A1A',
     description: 'Break free from digital loops',
   },
 ];

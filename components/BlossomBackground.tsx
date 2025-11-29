@@ -8,7 +8,7 @@ interface BlossomBackgroundProps {
 }
 
 export default function BlossomBackground({ children }: BlossomBackgroundProps) {
-  const blossomAnims = useRef([...Array(8)].map(() => new Animated.Value(0))).current;
+  const blossomAnims = useRef([...Array(12)].map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     blossomAnims.forEach((anim, index) => {
@@ -16,12 +16,12 @@ export default function BlossomBackground({ children }: BlossomBackgroundProps) 
         Animated.sequence([
           Animated.timing(anim, {
             toValue: 1,
-            duration: 4000 + index * 600,
+            duration: 5000 + index * 800,
             useNativeDriver: true,
           }),
           Animated.timing(anim, {
             toValue: 0,
-            duration: 4000 + index * 600,
+            duration: 5000 + index * 800,
             useNativeDriver: true,
           }),
         ])
@@ -31,76 +31,38 @@ export default function BlossomBackground({ children }: BlossomBackgroundProps) 
 
   return (
     <View style={styles.container}>
-      {/* Pink blossoms with black leaves */}
+      {/* Abstract grayscale blossom shapes */}
       {blossomAnims.map((anim, index) => (
         <React.Fragment key={index}>
           <Animated.View
             style={[
               styles.blossom,
               {
-                left: `${(index * 15) % 90}%`,
-                top: `${(index * 12) % 80}%`,
+                left: `${(index * 13) % 95}%`,
+                top: `${(index * 11) % 85}%`,
                 opacity: anim.interpolate({
                   inputRange: [0, 0.5, 1],
-                  outputRange: [0.1, 0.3, 0.1],
+                  outputRange: [0.08, 0.12, 0.08], // 8-12% opacity
                 }),
                 transform: [
                   {
                     translateY: anim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0, 100],
+                      outputRange: [0, 150],
                     }),
                   },
                   {
                     rotate: anim.interpolate({
                       inputRange: [0, 1],
-                      outputRange: ['0deg', '360deg'],
+                      outputRange: ['0deg', '180deg'],
                     }),
                   },
                 ],
               },
             ]}
           >
-            <View style={styles.blossomContainer}>
-              {/* Pink petals */}
-              <View style={[styles.petal, { backgroundColor: colors.blossomPink }]} />
-              <View style={[styles.petal, { backgroundColor: colors.blossomPink, transform: [{ rotate: '72deg' }] }]} />
-              <View style={[styles.petal, { backgroundColor: colors.blossomPink, transform: [{ rotate: '144deg' }] }]} />
-              <View style={[styles.petal, { backgroundColor: colors.blossomPink, transform: [{ rotate: '216deg' }] }]} />
-              <View style={[styles.petal, { backgroundColor: colors.blossomPink, transform: [{ rotate: '288deg' }] }]} />
-              {/* Black center */}
-              <View style={styles.center} />
-            </View>
-          </Animated.View>
-          {/* Black leaves */}
-          <Animated.View
-            style={[
-              styles.leaf,
-              {
-                left: `${((index * 15) + 5) % 90}%`,
-                top: `${((index * 12) + 10) % 80}%`,
-                opacity: anim.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.05, 0.15, 0.05],
-                }),
-                transform: [
-                  {
-                    translateY: anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 120],
-                    }),
-                  },
-                  {
-                    rotate: anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0deg', '-180deg'],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <View style={styles.leafShape} />
+            {/* Abstract circular shape */}
+            <View style={styles.abstractShape} />
           </Animated.View>
         </React.Fragment>
       ))}
@@ -116,38 +78,13 @@ const styles = StyleSheet.create({
   },
   blossom: {
     position: 'absolute',
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
   },
-  blossomContainer: {
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  petal: {
-    position: 'absolute',
-    width: 12,
-    height: 18,
-    borderRadius: 6,
-    top: 0,
-  },
-  center: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.black,
-  },
-  leaf: {
-    position: 'absolute',
-    width: 20,
-    height: 20,
-  },
-  leafShape: {
-    width: 20,
-    height: 20,
-    backgroundColor: colors.black,
-    borderRadius: 10,
-    transform: [{ scaleX: 0.5 }],
+  abstractShape: {
+    width: 40,
+    height: 40,
+    backgroundColor: colors.blossomGray,
+    borderRadius: 20,
   },
 });

@@ -1,12 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import { impulseHubs } from '@/data/impulses';
 import { ImpulseType } from '@/types/impulse';
 import BlossomBackground from '@/components/BlossomBackground';
-import QuickAccessBar from '@/components/QuickAccessBar';
 
 export default function InterventionScreen() {
   const router = useRouter();
@@ -17,9 +16,11 @@ export default function InterventionScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(intervention?.duration || 60);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   
   const breatheAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const blossomAnims = useRef([...Array(8)].map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -27,6 +28,24 @@ export default function InterventionScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
+
+    // Start blossom animations
+    blossomAnims.forEach((anim, index) => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(anim, {
+            toValue: 1,
+            duration: 4000 + index * 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(anim, {
+            toValue: 0,
+            duration: 4000 + index * 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    });
   }, []);
 
   useEffect(() => {
@@ -35,6 +54,7 @@ export default function InterventionScreen() {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             setIsPlaying(false);
+            setShowFeedback(true);
             return 0;
           }
           return prev - 1;
@@ -61,18 +81,22 @@ export default function InterventionScreen() {
           }),
         ])
       ).start();
+    } else {
+      breatheAnim.stopAnimation();
     }
   }, [isPlaying]);
 
-  const handleNext = () => {
-    if (intervention?.script && currentStep < intervention.script.length - 1) {
-      setCurrentStep(currentStep + 1);
-    }
+  const handleFeedback = (rating: number) => {
+    console.log('User feedback:', rating);
+    // Auto-save and return to home
+    router.push('/(tabs)/(home)/' as any);
   };
 
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
+  const handleTapToExit = () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+    } else {
+      router.back();
     }
   };
 
@@ -88,104 +112,119 @@ export default function InterventionScreen() {
 
   const scale = breatheAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 1.4],
+    outputRange: [1, 1.6],
   });
 
   const opacity = breatheAnim.interpolate({
     inputRange: [0, 0.5, 1],
-    outputRange: [0.4, 1, 0.4],
+    outputRange: [0.3, 1, 0.3],
   });
+
+  if (showFeedback) {
+    return (
+      <BlossomBackground>
+        <TouchableOpacity 
+          style={styles.container} 
+          activeOpacity={1}
+          onPress={() => {}}
+        >
+          <Animated.View style={[styles.feedbackContainer, { opacity: fadeAnim }]}>
+            <Text style={styles.feedbackQuestion}>How do you feel now?</Text>
+            <View style={styles.dotsContainer}>
+              {[1, 2, 3, 4, 5].map((rating, index) => (
+                <React.Fragment key={index}>
+                  <TouchableOpacity
+                    style={styles.dot}
+                    onPress={() => handleFeedback(rating)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.dotInner} />
+                  </TouchableOpacity>
+                </React.Fragment>
+              ))}
+            </View>
+            <Text style={styles.feedbackHint}>Tap a dot to save</Text>
+          </Animated.View>
+        </TouchableOpacity>
+      </BlossomBackground>
+    );
+  }
 
   return (
     <BlossomBackground>
-      <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-            <View style={styles.header}>
-              <Text style={styles.title}>{intervention.title}</Text>
-              <Text style={styles.subtitle}>{intervention.description}</Text>
-            </View>
-
-            <View style={styles.breathingContainer}>
-              <Animated.View
-                style={[
-                  styles.breathingCircle,
-                  {
-                    transform: [{ scale }],
-                    opacity,
-                  },
-                ]}
-              >
-                <View style={styles.breathingInner} />
-              </Animated.View>
-            </View>
-
-            <View style={styles.timerContainer}>
-              <Text style={styles.timerText}>
-                {Math.floor(timeRemaining / 60)}:{(timeRemaining % 60).toString().padStart(2, '0')}
-              </Text>
-            </View>
-
-            {intervention.script && (
-              <View style={styles.scriptContainer}>
-                <Text style={styles.scriptText}>
-                  {intervention.script[currentStep]}
-                </Text>
-                <View style={styles.navigationButtons}>
-                  <TouchableOpacity
-                    style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
-                    onPress={handlePrevious}
-                    disabled={currentStep === 0}
-                  >
-                    <Text style={styles.navButtonText}>← Prev</Text>
-                  </TouchableOpacity>
-                  <Text style={styles.stepIndicator}>
-                    {currentStep + 1} / {intervention.script.length}
-                  </Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.navButton,
-                      currentStep === intervention.script.length - 1 && styles.navButtonDisabled,
-                    ]}
-                    onPress={handleNext}
-                    disabled={currentStep === intervention.script.length - 1}
-                  >
-                    <Text style={styles.navButtonText}>Next →</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={[buttonStyles.primaryButton, styles.playButton]}
-              onPress={() => {
-                if (timeRemaining === 0) {
-                  setTimeRemaining(intervention.duration);
-                }
-                setIsPlaying(!isPlaying);
-              }}
+      <TouchableOpacity 
+        style={styles.container} 
+        activeOpacity={1}
+        onPress={handleTapToExit}
+      >
+        {/* Grayscale blossom particles */}
+        {blossomAnims.map((anim, index) => (
+          <React.Fragment key={index}>
+            <Animated.View
+              style={[
+                styles.blossomParticle,
+                {
+                  left: `${(index * 15) % 90}%`,
+                  top: `${(index * 12) % 80}%`,
+                  opacity: anim.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0.05, 0.1, 0.05],
+                  }),
+                  transform: [
+                    {
+                      translateY: anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 100],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <Text style={buttonStyles.primaryButtonText}>
-                {isPlaying ? 'Pause' : timeRemaining === 0 ? 'Restart' : 'Start'}
-              </Text>
-            </TouchableOpacity>
+              <View style={styles.particleShape} />
+            </Animated.View>
+          </React.Fragment>
+        ))}
 
-            {timeRemaining === 0 && (
-              <View style={styles.completionCard}>
-                <Text style={styles.completionText}>Well done!</Text>
-                <Text style={styles.completionSubtext}>
-                  You&apos;ve completed this intervention
-                </Text>
-              </View>
-            )}
-          </Animated.View>
-        </ScrollView>
-        
-        <QuickAccessBar />
-      </View>
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {/* Large breathing circle */}
+          <View style={styles.breathingContainer}>
+            <Animated.View
+              style={[
+                styles.breathingCircle,
+                {
+                  transform: [{ scale }],
+                  opacity,
+                },
+              ]}
+            />
+          </View>
+
+          {/* Instruction text */}
+          <Text style={styles.instructionText}>
+            {intervention.script && intervention.script[currentStep]}
+          </Text>
+
+          {/* Small exit hint */}
+          <Text style={styles.exitHint}>Tap anywhere to {isPlaying ? 'pause' : 'exit'}</Text>
+        </Animated.View>
+
+        {/* Start button (only shown when not playing) */}
+        {!isPlaying && timeRemaining > 0 && (
+          <View style={styles.startButtonContainer}>
+            <TouchableOpacity
+              style={buttonStyles.secondaryButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                setIsPlaying(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={buttonStyles.secondaryButtonText}>Start</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </TouchableOpacity>
     </BlossomBackground>
   );
 }
@@ -194,119 +233,103 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-  },
   content: {
     flex: 1,
-  },
-  header: {
     alignItems: 'center',
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.black,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
   },
   breathingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 200,
-    marginBottom: 32,
+    marginBottom: 80,
   },
   breathingCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.black,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: colors.black,
+    backgroundColor: 'transparent',
   },
-  breathingInner: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: colors.white,
-  },
-  timerContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  timerText: {
-    fontSize: 42,
-    fontWeight: '700',
-    color: colors.black,
-  },
-  scriptContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-    minHeight: 100,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  scriptText: {
-    fontSize: 16,
+  instructionText: {
+    fontSize: 18,
+    fontWeight: '300',
     color: colors.black,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 20,
+    lineHeight: 28,
+    letterSpacing: 0.3,
+    marginBottom: 40,
   },
-  navigationButtons: {
+  exitHint: {
+    fontSize: 12,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  blossomParticle: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+  },
+  particleShape: {
+    width: 30,
+    height: 30,
+    backgroundColor: colors.blossomGray,
+    borderRadius: 15,
+  },
+  startButtonContainer: {
+    position: 'absolute',
+    bottom: 120,
+    left: 32,
+    right: 32,
+  },
+  feedbackContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  feedbackQuestion: {
+    fontSize: 24,
+    fontWeight: '300',
+    color: colors.black,
+    textAlign: 'center',
+    marginBottom: 48,
+    letterSpacing: 0.3,
+  },
+  dotsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 24,
+    marginBottom: 24,
+  },
+  dot: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.black,
     alignItems: 'center',
-  },
-  navButton: {
-    padding: 8,
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
-  },
-  navButtonText: {
-    fontSize: 13,
-    color: colors.black,
-    fontWeight: '600',
-  },
-  stepIndicator: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  playButton: {
-    marginTop: 16,
-  },
-  completionCard: {
+    justifyContent: 'center',
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
-  completionText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.black,
-    marginBottom: 4,
+  dotInner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.black,
   },
-  completionSubtext: {
-    fontSize: 13,
+  feedbackHint: {
+    fontSize: 12,
+    fontWeight: '300',
     color: colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.2,
   },
   errorText: {
     fontSize: 15,
+    fontWeight: '300',
     color: colors.black,
     textAlign: 'center',
   },

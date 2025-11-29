@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import { impulses } from '@/data/impulses';
 import BlossomBackground from '@/components/BlossomBackground';
-import QuickAccessBar from '@/components/QuickAccessBar';
+import { IconSymbol } from '@/components/IconSymbol';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -19,6 +19,14 @@ export default function HomeScreen() {
     }).start();
   }, []);
 
+  const handleImpulsePress = (impulseId: string) => {
+    // Direct launch to intervention (micro tier - index 0)
+    router.push({
+      pathname: '/(tabs)/(home)/intervention',
+      params: { impulseId, tierIndex: 0 }
+    } as any);
+  };
+
   return (
     <BlossomBackground>
       <View style={styles.container}>
@@ -29,29 +37,24 @@ export default function HomeScreen() {
           <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
             <Text style={styles.logo}>GoFriday</Text>
             <Text style={styles.subtitle}>Calm impulses gently</Text>
-          </Animated.View>
-
-          <Animated.View style={[styles.streakCard, { opacity: fadeAnim }]}>
-            <Text style={styles.streakText}>0 day streak</Text>
-            <Text style={styles.streakSubtext}>Start your journey today</Text>
+            <Text style={styles.streak}>0-day streak · Start your journey</Text>
           </Animated.View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Impulse Hubs</Text>
             <View style={styles.hubsGrid}>
               {impulses.map((impulse, index) => (
                 <React.Fragment key={index}>
                   <TouchableOpacity
-                    style={styles.hubWidget}
-                    onPress={() => router.push({
-                      pathname: '/(tabs)/(home)/intervention',
-                      params: { impulseId: impulse.id, tierIndex: 0 }
-                    } as any)}
+                    style={styles.hubTile}
+                    onPress={() => handleImpulsePress(impulse.id)}
                     activeOpacity={0.7}
                   >
-                    <View style={styles.hubIconContainer}>
-                      <Text style={styles.hubIcon}>{impulse.icon}</Text>
-                    </View>
+                    <IconSymbol
+                      android_material_icon_name={impulse.icon as any}
+                      ios_icon_name={impulse.icon}
+                      size={32}
+                      color={colors.iconGray}
+                    />
                     <Text style={styles.hubName}>{impulse.name}</Text>
                   </TouchableOpacity>
                 </React.Fragment>
@@ -59,14 +62,9 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Tap any impulse hub to start a calming intervention
-            </Text>
-          </View>
+          {/* Spacer to prevent content from being hidden by floating button */}
+          <View style={styles.bottomSpacer} />
         </ScrollView>
-        
-        <QuickAccessBar />
       </View>
     </BlossomBackground>
   );
@@ -77,92 +75,65 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingTop: 80,
+    paddingHorizontal: 32,
+    paddingBottom: 140,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 64,
   },
   logo: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.black,
-    marginBottom: 8,
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  streakCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  streakText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.black,
-    marginBottom: 4,
-  },
-  streakSubtext: {
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
+    fontSize: 40,
     fontWeight: '700',
     color: colors.black,
     marginBottom: 16,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 15,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 20,
+    letterSpacing: 0.3,
+  },
+  streak: {
+    fontSize: 13,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  section: {
+    marginBottom: 32,
   },
   hubsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 16,
     justifyContent: 'space-between',
   },
-  hubWidget: {
-    width: '31%',
+  hubTile: {
+    width: '47%',
     aspectRatio: 1,
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  hubIconContainer: {
-    marginBottom: 8,
-  },
-  hubIcon: {
-    fontSize: 32,
+    borderWidth: 1.5,
+    borderColor: colors.black,
   },
   hubName: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '400',
     color: colors.black,
     textAlign: 'center',
+    marginTop: 12,
+    letterSpacing: 0.2,
   },
-  footer: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginTop: 16,
-  },
-  footerText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 18,
+  bottomSpacer: {
+    height: 40,
   },
 });

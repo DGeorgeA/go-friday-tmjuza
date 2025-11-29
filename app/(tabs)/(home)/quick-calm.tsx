@@ -5,10 +5,16 @@ import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import { breathingPatterns } from '@/data/impulses';
 import BlossomBackground from '@/components/BlossomBackground';
-import QuickAccessBar from '@/components/QuickAccessBar';
 
 export default function QuickCalmScreen() {
   const router = useRouter();
+
+  const handlePatternPress = (patternId: string) => {
+    router.push({
+      pathname: '/(tabs)/(home)/breathing',
+      params: { patternId }
+    } as any);
+  };
 
   return (
     <BlossomBackground>
@@ -28,10 +34,7 @@ export default function QuickCalmScreen() {
               <React.Fragment key={index}>
                 <TouchableOpacity
                   style={styles.patternCard}
-                  onPress={() => router.push({
-                    pathname: '/(tabs)/(home)/breathing',
-                    params: { patternId: pattern.id }
-                  } as any)}
+                  onPress={() => handlePatternPress(pattern.id)}
                   activeOpacity={0.8}
                 >
                   <Text style={styles.patternName}>{pattern.name}</Text>
@@ -47,51 +50,9 @@ export default function QuickCalmScreen() {
             ))}
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Quick Tools</Text>
-            
-            <TouchableOpacity
-              style={styles.toolCard}
-              onPress={() => console.log('5-4-3-2-1 Grounding')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.toolContent}>
-                <Text style={styles.toolName}>5-4-3-2-1 Grounding</Text>
-                <Text style={styles.toolDescription}>
-                  Name 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolCard}
-              onPress={() => console.log('Body Scan')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.toolContent}>
-                <Text style={styles.toolName}>Quick Body Scan</Text>
-                <Text style={styles.toolDescription}>
-                  Release tension from head to toe in 60 seconds
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.toolCard}
-              onPress={() => console.log('Affirmations')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.toolContent}>
-                <Text style={styles.toolName}>Calming Affirmations</Text>
-                <Text style={styles.toolDescription}>
-                  Gentle reminders to ease your mind
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          {/* Spacer */}
+          <View style={styles.bottomSpacer} />
         </ScrollView>
-        
-        <QuickAccessBar />
       </View>
     </BlossomBackground>
   );
@@ -102,25 +63,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingTop: 80,
+    paddingHorizontal: 32,
+    paddingBottom: 120,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 48,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '700',
     color: colors.black,
-    marginBottom: 8,
+    marginBottom: 12,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '300',
     color: colors.textSecondary,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
   section: {
     marginBottom: 32,
@@ -129,26 +92,30 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.black,
-    marginBottom: 16,
+    marginBottom: 24,
+    letterSpacing: -0.3,
   },
   patternCard: {
     backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: 14,
+    padding: 24,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: colors.black,
   },
   patternName: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '400',
     color: colors.black,
-    marginBottom: 4,
+    marginBottom: 8,
+    letterSpacing: 0.2,
   },
   patternDescription: {
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: '300',
     color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 16,
+    lineHeight: 20,
   },
   patternDetails: {
     flexDirection: 'row',
@@ -156,36 +123,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   patternDetailText: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '300',
     color: colors.textSecondary,
     flex: 1,
   },
   patternCycles: {
-    fontSize: 12,
-    color: colors.black,
-    fontWeight: '600',
-  },
-  toolCard: {
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 18,
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  toolContent: {
-    flex: 1,
-  },
-  toolName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.black,
-    marginBottom: 4,
-  },
-  toolDescription: {
     fontSize: 13,
-    color: colors.textSecondary,
+    color: colors.black,
+    fontWeight: '400',
+  },
+  bottomSpacer: {
+    height: 40,
   },
 });

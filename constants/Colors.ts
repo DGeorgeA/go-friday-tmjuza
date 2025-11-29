@@ -1,5 +1,5 @@
 
-const tintColorLight = "#000000";
+const tintColorLight = "#1A1A1A";
 const tintColorDark = "#FFFFFF";
 
 export const zincColors = {
@@ -22,18 +22,19 @@ export const appleRed = "#FF3B30";
 export const borderColor = "#E0E0E0";
 export const appleGreen = "#34C759";
 
-// GoFriday Minimalistic Black & White Theme
+// GoFriday Monochrome Japanese Zen Theme
 export const Colors = {
   light: {
-    text: "#000000",
-    background: "#FFFFFF",
-    tint: "#000000",
-    icon: "#666666",
-    tabIconDefault: "#666666",
-    tabIconSelected: "#000000",
-    textSecondary: "#666666",
+    text: "#1A1A1A", // Deep charcoal black
+    background: "#FFFFFF", // Pure white
+    tint: "#1A1A1A",
+    icon: "#4A4A4A", // Black/gray for icons
+    tabIconDefault: "#4A4A4A",
+    tabIconSelected: "#1A1A1A",
+    textSecondary: "#6B6B6B", // Light gray for secondary text
     card: "#FFFFFF",
-    border: "#E0E0E0",
+    border: "#E5E5E5", // Subtle border
+    blossomGray: "rgba(0, 0, 0, 0.08)", // 8% opacity neutral gray for blossoms
   },
   dark: {
     text: "#FFFFFF",
@@ -45,6 +46,7 @@ export const Colors = {
     textSecondary: "#999999",
     card: "#1A1A1A",
     border: "#333333",
+    blossomGray: "rgba(255, 255, 255, 0.08)",
   },
 };
 
