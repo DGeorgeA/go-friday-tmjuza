@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import { breathingPatterns } from '@/data/impulses';
+import BlossomBackground from '@/components/BlossomBackground';
+import QuickAccessBar from '@/components/QuickAccessBar';
 
 export default function BreathingScreen() {
   const router = useRouter();
@@ -40,7 +42,6 @@ export default function BreathingScreen() {
       setPhaseTime((prev) => {
         const currentDuration = phaseDurations[phase];
         if (prev >= currentDuration) {
-          // Move to next phase
           if (phase === 'inhale' && pattern.hold1 > 0) {
             setPhase('hold1');
             return 0;
@@ -51,7 +52,6 @@ export default function BreathingScreen() {
             setPhase('hold2');
             return 0;
           } else {
-            // Complete cycle
             if (currentCycle >= pattern.cycles - 1) {
               setIsPlaying(false);
               setCurrentCycle(0);
@@ -88,20 +88,22 @@ export default function BreathingScreen() {
 
   if (!pattern) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Pattern not found</Text>
-      </View>
+      <BlossomBackground>
+        <View style={styles.container}>
+          <Text style={styles.errorText}>Pattern not found</Text>
+        </View>
+      </BlossomBackground>
     );
   }
 
   const scale = breatheAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [1, 2],
+    outputRange: [1, 1.8],
   });
 
   const opacity = breatheAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.4, 1],
+    outputRange: [0.5, 1],
   });
 
   const getPhaseText = () => {
@@ -118,77 +120,78 @@ export default function BreathingScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.blossomPink }]}>
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => router.back()}
+    <BlossomBackground>
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.closeButtonText}>✕</Text>
-        </TouchableOpacity>
+          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+            <View style={styles.header}>
+              <Text style={styles.title}>{pattern.name}</Text>
+              <Text style={styles.subtitle}>{pattern.description}</Text>
+            </View>
 
-        <View style={styles.header}>
-          <Text style={styles.title}>{pattern.name}</Text>
-          <Text style={styles.subtitle}>{pattern.description}</Text>
-        </View>
+            <View style={styles.breathingContainer}>
+              <Animated.View
+                style={[
+                  styles.breathingCircle,
+                  {
+                    transform: [{ scale }],
+                    opacity,
+                  },
+                ]}
+              >
+                <View style={styles.breathingInner} />
+              </Animated.View>
+            </View>
 
-        <View style={styles.breathingContainer}>
-          <Animated.View
-            style={[
-              styles.breathingCircle,
-              {
-                transform: [{ scale }],
-                opacity,
-              },
-            ]}
-          >
-            <Text style={styles.breathingEmoji}>🌸</Text>
+            <View style={styles.phaseContainer}>
+              <Text style={styles.phaseText}>{getPhaseText()}</Text>
+              <Text style={styles.cycleText}>
+                Cycle {currentCycle + 1} of {pattern.cycles}
+              </Text>
+            </View>
+
+            <View style={styles.instructionsCard}>
+              <Text style={styles.instructionsText}>
+                Inhale: {pattern.inhale}s
+                {pattern.hold1 > 0 && ` • Hold: ${pattern.hold1}s`}
+                {' • '}Exhale: {pattern.exhale}s
+                {pattern.hold2 > 0 && ` • Hold: ${pattern.hold2}s`}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[buttonStyles.primaryButton, styles.playButton]}
+              onPress={() => {
+                if (!isPlaying) {
+                  setCurrentCycle(0);
+                  setPhase('inhale');
+                  setPhaseTime(0);
+                }
+                setIsPlaying(!isPlaying);
+              }}
+            >
+              <Text style={buttonStyles.primaryButtonText}>
+                {isPlaying ? 'Pause' : 'Start'}
+              </Text>
+            </TouchableOpacity>
+
+            {currentCycle === pattern.cycles && !isPlaying && (
+              <View style={styles.completionCard}>
+                <Text style={styles.completionText}>Complete!</Text>
+                <Text style={styles.completionSubtext}>
+                  You&apos;ve finished all {pattern.cycles} cycles
+                </Text>
+              </View>
+            )}
           </Animated.View>
-        </View>
-
-        <View style={styles.phaseContainer}>
-          <Text style={styles.phaseText}>{getPhaseText()}</Text>
-          <Text style={styles.cycleText}>
-            Cycle {currentCycle + 1} of {pattern.cycles}
-          </Text>
-        </View>
-
-        <View style={styles.instructionsCard}>
-          <Text style={styles.instructionsText}>
-            Inhale: {pattern.inhale}s
-            {pattern.hold1 > 0 && ` • Hold: ${pattern.hold1}s`}
-            {' • '}Exhale: {pattern.exhale}s
-            {pattern.hold2 > 0 && ` • Hold: ${pattern.hold2}s`}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={[buttonStyles.primaryButton, styles.playButton]}
-          onPress={() => {
-            if (!isPlaying) {
-              setCurrentCycle(0);
-              setPhase('inhale');
-              setPhaseTime(0);
-            }
-            setIsPlaying(!isPlaying);
-          }}
-        >
-          <Text style={buttonStyles.primaryButtonText}>
-            {isPlaying ? 'Pause' : 'Start'}
-          </Text>
-        </TouchableOpacity>
-
-        {currentCycle === pattern.cycles && !isPlaying && (
-          <View style={styles.completionCard}>
-            <Text style={styles.completionEmoji}>✨</Text>
-            <Text style={styles.completionText}>Complete!</Text>
-            <Text style={styles.completionSubtext}>
-              You&apos;ve finished all {pattern.cycles} cycles
-            </Text>
-          </View>
-        )}
-      </Animated.View>
-    </View>
+        </ScrollView>
+        
+        <QuickAccessBar />
+      </View>
+    </BlossomBackground>
   );
 }
 
@@ -196,110 +199,103 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
     paddingTop: 60,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
-  closeButton: {
-    alignSelf: 'flex-end',
-    padding: 8,
-  },
-  closeButtonText: {
-    fontSize: 28,
-    color: colors.charcoal,
-    fontWeight: '300',
+  content: {
+    flex: 1,
   },
   header: {
     alignItems: 'center',
     marginBottom: 32,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: colors.charcoal,
-    opacity: 0.7,
+    fontSize: 14,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   breathingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 250,
+    height: 220,
     marginBottom: 32,
   },
   breathingCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.warmPink,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  breathingEmoji: {
-    fontSize: 40,
+  breathingInner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.white,
   },
   phaseContainer: {
     alignItems: 'center',
     marginBottom: 32,
   },
   phaseText: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 8,
   },
   cycleText: {
-    fontSize: 16,
-    color: colors.charcoal,
-    opacity: 0.6,
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   instructionsCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 18,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   instructionsText: {
-    fontSize: 14,
-    color: colors.charcoal,
+    fontSize: 13,
+    color: colors.black,
     textAlign: 'center',
     lineHeight: 20,
   },
   playButton: {
-    marginTop: 'auto',
+    marginTop: 16,
   },
   completionCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 12,
+    padding: 20,
     alignItems: 'center',
     marginTop: 16,
-  },
-  completionEmoji: {
-    fontSize: 48,
-    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   completionText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 4,
   },
   completionSubtext: {
-    fontSize: 14,
-    color: colors.charcoal,
-    opacity: 0.7,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
   errorText: {
-    fontSize: 16,
-    color: colors.charcoal,
+    fontSize: 15,
+    color: colors.black,
     textAlign: 'center',
   },
 });

@@ -1,6 +1,6 @@
 
-const tintColorLight = "#FF8DAA";
-const tintColorDark = "#FF8DAA";
+const tintColorLight = "#000000";
+const tintColorDark = "#FFFFFF";
 
 export const zincColors = {
   50: "#fafafa",
@@ -19,32 +19,32 @@ export const zincColors = {
 export const appleBlue = "#007AFF";
 export const appleRed = "#FF3B30";
 
-export const borderColor = "#A1A1AA80";
+export const borderColor = "#E0E0E0";
 export const appleGreen = "#34C759";
 
-// GoFriday Theme Colors
+// GoFriday Minimalistic Black & White Theme
 export const Colors = {
   light: {
-    text: "#2B2B2F", // Charcoal
-    background: "#F7D7E3", // Blossom Pink
-    tint: "#FF8DAA", // Warm Pink
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: "#FF8DAA", // Warm Pink
-    textSecondary: "#F5F7FA", // Serenity Gray
+    text: "#000000",
+    background: "#FFFFFF",
+    tint: "#000000",
+    icon: "#666666",
+    tabIconDefault: "#666666",
+    tabIconSelected: "#000000",
+    textSecondary: "#666666",
     card: "#FFFFFF",
-    border: "#FF8DAA40",
+    border: "#E0E0E0",
   },
   dark: {
-    text: "#F5F7FA", // Serenity Gray
-    background: "#2B2B2F", // Charcoal
-    tint: "#FF8DAA", // Warm Pink
-    icon: "#9BA1A6",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: "#FF8DAA",
-    textSecondary: "#F7D7E3", // Blossom Pink
-    card: "#3f3f46",
-    border: "#FF8DAA40",
+    text: "#FFFFFF",
+    background: "#000000",
+    tint: "#FFFFFF",
+    icon: "#999999",
+    tabIconDefault: "#999999",
+    tabIconSelected: "#FFFFFF",
+    textSecondary: "#999999",
+    card: "#1A1A1A",
+    border: "#333333",
   },
 };
 

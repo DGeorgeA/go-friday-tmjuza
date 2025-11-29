@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import * as Haptics from 'expo-haptics';
+import BlossomBackground from '@/components/BlossomBackground';
+import QuickAccessBar from '@/components/QuickAccessBar';
 
 export default function PanicButtonScreen() {
   const router = useRouter();
@@ -95,99 +97,107 @@ export default function PanicButtonScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.blossomPink }]}>
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        <View style={styles.header}>
-          <Text style={styles.icon}>🆘</Text>
-          <Text style={styles.title}>Panic Button</Text>
-          <Text style={styles.subtitle}>
-            You&apos;re safe. Let&apos;s calm your nervous system together.
-          </Text>
-        </View>
-
-        {!isActive ? (
-          <>
-            <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>What happens next:</Text>
-              <Text style={styles.infoText}>
-                • 4-4-8 breathing pattern{'\n'}
-                • Grounding exercises{'\n'}
-                • Gentle reminders{'\n'}
-                • You&apos;re in control
+    <BlossomBackground>
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Panic Button</Text>
+              <Text style={styles.subtitle}>
+                You&apos;re safe. Let&apos;s calm your nervous system together.
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={[buttonStyles.panicButton, styles.activateButton]}
-              onPress={handleActivate}
-              activeOpacity={0.8}
-            >
-              <Text style={[buttonStyles.panicButtonText, { fontSize: 24 }]}>
-                I Need Help Now
-              </Text>
-            </TouchableOpacity>
+            {!isActive ? (
+              <>
+                <View style={styles.infoCard}>
+                  <Text style={styles.infoTitle}>What happens next:</Text>
+                  <Text style={styles.infoText}>
+                    - 4-4-8 breathing pattern{'\n'}
+                    - Grounding exercises{'\n'}
+                    - Gentle reminders{'\n'}
+                    - You&apos;re in control
+                  </Text>
+                </View>
 
-            <View style={styles.emergencyCard}>
-              <Text style={styles.emergencyTitle}>In Crisis?</Text>
-              <Text style={styles.emergencyText}>
-                Call 988 (Suicide & Crisis Lifeline){'\n'}
-                Text HOME to 741741 (Crisis Text Line)
-              </Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.breathingContainer}>
-              <Animated.View
-                style={[
-                  styles.breathingCircle,
-                  {
-                    transform: [{ scale: pulseAnim }],
-                  },
-                ]}
-              >
-                <Text style={styles.breathingEmoji}>🌸</Text>
-              </Animated.View>
-            </View>
+                <TouchableOpacity
+                  style={[buttonStyles.panicButton, styles.activateButton]}
+                  onPress={handleActivate}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[buttonStyles.panicButtonText, { fontSize: 20 }]}>
+                    I Need Help Now
+                  </Text>
+                </TouchableOpacity>
 
-            <View style={styles.phaseContainer}>
-              <Text style={styles.phaseText}>{getPhaseText()}</Text>
-              <Text style={styles.breathCountText}>
-                {breathCount} breath{breathCount !== 1 ? 's' : ''} completed
-              </Text>
-            </View>
+                <View style={styles.emergencyCard}>
+                  <Text style={styles.emergencyTitle}>In Crisis?</Text>
+                  <Text style={styles.emergencyText}>
+                    Call 988 (Suicide & Crisis Lifeline){'\n'}
+                    Text HOME to 741741 (Crisis Text Line)
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.breathingContainer}>
+                  <Animated.View
+                    style={[
+                      styles.breathingCircle,
+                      {
+                        transform: [{ scale: pulseAnim }],
+                      },
+                    ]}
+                  >
+                    <View style={styles.breathingInner} />
+                  </Animated.View>
+                </View>
 
-            <View style={styles.groundingCard}>
-              <Text style={styles.groundingTitle}>While you breathe:</Text>
-              <Text style={styles.groundingText}>
-                Name 5 things you can see{'\n'}
-                4 things you can touch{'\n'}
-                3 things you can hear{'\n'}
-                2 things you can smell{'\n'}
-                1 thing you can taste
-              </Text>
-            </View>
+                <View style={styles.phaseContainer}>
+                  <Text style={styles.phaseText}>{getPhaseText()}</Text>
+                  <Text style={styles.breathCountText}>
+                    {breathCount} breath{breathCount !== 1 ? 's' : ''} completed
+                  </Text>
+                </View>
 
-            <View style={styles.reminderCard}>
-              <Text style={styles.reminderText}>
-                💙 This feeling will pass{'\n'}
-                💙 You are safe right now{'\n'}
-                💙 You&apos;ve survived 100% of your worst days
-              </Text>
-            </View>
+                <View style={styles.groundingCard}>
+                  <Text style={styles.groundingTitle}>While you breathe:</Text>
+                  <Text style={styles.groundingText}>
+                    Name 5 things you can see{'\n'}
+                    4 things you can touch{'\n'}
+                    3 things you can hear{'\n'}
+                    2 things you can smell{'\n'}
+                    1 thing you can taste
+                  </Text>
+                </View>
 
-            <TouchableOpacity
-              style={[buttonStyles.secondaryButton, styles.stopButton]}
-              onPress={handleStop}
-            >
-              <Text style={buttonStyles.secondaryButtonText}>
-                I&apos;m Feeling Better
-              </Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </Animated.View>
-    </View>
+                <View style={styles.reminderCard}>
+                  <Text style={styles.reminderText}>
+                    This feeling will pass{'\n'}
+                    You are safe right now{'\n'}
+                    You&apos;ve survived 100% of your worst days
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[buttonStyles.secondaryButton, styles.stopButton]}
+                  onPress={handleStop}
+                >
+                  <Text style={buttonStyles.secondaryButtonText}>
+                    I&apos;m Feeling Better
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </Animated.View>
+        </ScrollView>
+        
+        <QuickAccessBar />
+      </View>
+    </BlossomBackground>
   );
 }
 
@@ -195,70 +205,69 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
     paddingTop: 60,
     paddingHorizontal: 24,
-    paddingBottom: 120,
+    paddingBottom: 20,
+  },
+  content: {
+    flex: 1,
   },
   header: {
     alignItems: 'center',
     marginBottom: 32,
   },
-  icon: {
-    fontSize: 64,
-    marginBottom: 12,
-  },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: colors.charcoal,
-    opacity: 0.7,
+    fontSize: 14,
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 20,
   },
   infoCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   infoTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 12,
   },
   infoText: {
-    fontSize: 16,
-    color: colors.charcoal,
-    lineHeight: 24,
+    fontSize: 14,
+    color: colors.black,
+    lineHeight: 22,
   },
   activateButton: {
     marginBottom: 24,
   },
   emergencyCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 18,
     borderWidth: 2,
-    borderColor: '#FF3B30',
+    borderColor: colors.danger,
   },
   emergencyTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#FF3B30',
+    color: colors.danger,
     marginBottom: 8,
   },
   emergencyText: {
-    fontSize: 14,
-    color: colors.charcoal,
+    fontSize: 13,
+    color: colors.black,
     lineHeight: 20,
   },
   breathingContainer: {
@@ -268,61 +277,67 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   breathingCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.warmPink,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  breathingEmoji: {
-    fontSize: 48,
+  breathingInner: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.white,
   },
   phaseContainer: {
     alignItems: 'center',
     marginBottom: 24,
   },
   phaseText: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 8,
   },
   breathCountText: {
-    fontSize: 16,
-    color: colors.charcoal,
-    opacity: 0.6,
+    fontSize: 14,
+    color: colors.textSecondary,
   },
   groundingCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 18,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   groundingTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 8,
   },
   groundingText: {
-    fontSize: 14,
-    color: colors.charcoal,
-    lineHeight: 22,
+    fontSize: 13,
+    color: colors.black,
+    lineHeight: 20,
   },
   reminderCard: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 18,
     marginBottom: 24,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   reminderText: {
-    fontSize: 16,
-    color: colors.charcoal,
-    lineHeight: 28,
+    fontSize: 14,
+    color: colors.black,
+    lineHeight: 24,
     textAlign: 'center',
   },
   stopButton: {
-    marginTop: 'auto',
+    marginTop: 16,
   },
 });

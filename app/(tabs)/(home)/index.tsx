@@ -2,140 +2,73 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@react-navigation/native';
-import { homeButtons } from '@/components/HomeData';
-import { colors, buttonStyles, commonStyles } from '@/styles/commonStyles';
+import { colors, buttonStyles } from '@/styles/commonStyles';
+import { impulses } from '@/data/impulses';
+import BlossomBackground from '@/components/BlossomBackground';
+import QuickAccessBar from '@/components/QuickAccessBar';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const blossomAnims = useRef([...Array(6)].map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
-    // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
       useNativeDriver: true,
     }).start();
-
-    // Blossom drift animations
-    blossomAnims.forEach((anim, index) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 3000 + index * 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 3000 + index * 500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    });
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.blossomPink }]}>
-      {/* Floating blossom petals */}
-      {blossomAnims.map((anim, index) => (
-        <Animated.Text
-          key={index}
-          style={[
-            styles.blossom,
-            {
-              left: `${(index * 20) % 100}%`,
-              opacity: anim.interpolate({
-                inputRange: [0, 0.5, 1],
-                outputRange: [0.2, 0.6, 0.2],
-              }),
-              transform: [
-                {
-                  translateY: anim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-50, 600],
-                  }),
-                },
-                {
-                  translateX: anim.interpolate({
-                    inputRange: [0, 0.5, 1],
-                    outputRange: [0, 30, 0],
-                  }),
-                },
-              ],
-            },
-          ]}
+    <BlossomBackground>
+      <View style={styles.container}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          🌸
-        </Animated.Text>
-      ))}
+          <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
+            <Text style={styles.logo}>GoFriday</Text>
+            <Text style={styles.subtitle}>Calm impulses gently</Text>
+          </Animated.View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-          <Text style={styles.logo}>🌸</Text>
-          <Text style={styles.title}>GoFriday</Text>
-          <Text style={styles.subtitle}>Relax into a Friday-evening calm</Text>
-        </Animated.View>
+          <Animated.View style={[styles.streakCard, { opacity: fadeAnim }]}>
+            <Text style={styles.streakText}>0 day streak</Text>
+            <Text style={styles.streakSubtext}>Start your journey today</Text>
+          </Animated.View>
 
-        <Animated.View style={[styles.streakCard, { opacity: fadeAnim }]}>
-          <Text style={styles.streakEmoji}>🔥</Text>
-          <Text style={styles.streakText}>0 day streak</Text>
-          <Text style={styles.streakSubtext}>Start your journey today</Text>
-        </Animated.View>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Impulse Hubs</Text>
+            <View style={styles.hubsGrid}>
+              {impulses.map((impulse, index) => (
+                <React.Fragment key={index}>
+                  <TouchableOpacity
+                    style={styles.hubWidget}
+                    onPress={() => router.push({
+                      pathname: '/(tabs)/(home)/intervention',
+                      params: { impulseId: impulse.id, tierIndex: 0 }
+                    } as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.hubIconContainer}>
+                      <Text style={styles.hubIcon}>{impulse.icon}</Text>
+                    </View>
+                    <Text style={styles.hubName}>{impulse.name}</Text>
+                  </TouchableOpacity>
+                </React.Fragment>
+              ))}
+            </View>
+          </View>
 
-        <View style={styles.buttonsContainer}>
-          {homeButtons.map((button, index) => (
-            <Animated.View
-              key={button.route}
-              style={{
-                opacity: fadeAnim,
-                transform: [
-                  {
-                    translateY: fadeAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [50, 0],
-                    }),
-                  },
-                ],
-              }}
-            >
-              <TouchableOpacity
-                style={[
-                  button.text === 'Panic Button' ? buttonStyles.panicButton : buttonStyles.primaryButton,
-                  styles.homeButton,
-                ]}
-                onPress={() => router.push(button.route as any)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.buttonIcon}>{button.icon}</Text>
-                <Text
-                  style={
-                    button.text === 'Panic Button'
-                      ? buttonStyles.panicButtonText
-                      : buttonStyles.primaryButtonText
-                  }
-                >
-                  {button.text}
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            With one tap, enter a calming intervention that makes impulses easier to manage.
-          </Text>
-        </View>
-      </ScrollView>
-    </View>
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              Tap any impulse hub to start a calming intervention
+            </Text>
+          </View>
+        </ScrollView>
+        
+        <QuickAccessBar />
+      </View>
+    </BlossomBackground>
   );
 }
 
@@ -146,81 +79,90 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 60,
     paddingHorizontal: 24,
-    paddingBottom: 120,
-  },
-  blossom: {
-    position: 'absolute',
-    fontSize: 24,
-    zIndex: 0,
+    paddingBottom: 20,
   },
   header: {
     alignItems: 'center',
     marginBottom: 32,
   },
   logo: {
-    fontSize: 64,
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 8,
     letterSpacing: -1,
   },
   subtitle: {
-    fontSize: 16,
-    color: colors.charcoal,
-    opacity: 0.7,
+    fontSize: 14,
+    color: colors.textSecondary,
     textAlign: 'center',
-    paddingHorizontal: 20,
   },
   streakCard: {
     backgroundColor: colors.white,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: 12,
+    padding: 20,
     alignItems: 'center',
     marginBottom: 32,
-    boxShadow: '0px 4px 12px rgba(43, 43, 47, 0.08)',
-    elevation: 3,
-  },
-  streakEmoji: {
-    fontSize: 48,
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   streakText: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    color: colors.charcoal,
+    color: colors.black,
     marginBottom: 4,
   },
   streakSubtext: {
-    fontSize: 14,
-    color: colors.charcoal,
-    opacity: 0.6,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
-  buttonsContainer: {
-    width: '100%',
+  section: {
     marginBottom: 24,
   },
-  homeButton: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.black,
+    marginBottom: 16,
+  },
+  hubsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'space-between',
+  },
+  hubWidget: {
+    width: '31%',
+    aspectRatio: 1,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  buttonIcon: {
-    fontSize: 24,
+  hubIconContainer: {
+    marginBottom: 8,
+  },
+  hubIcon: {
+    fontSize: 32,
+  },
+  hubName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.black,
+    textAlign: 'center',
   },
   footer: {
     alignItems: 'center',
     paddingHorizontal: 20,
+    marginTop: 16,
   },
   footerText: {
-    fontSize: 14,
-    color: colors.charcoal,
-    opacity: 0.6,
+    fontSize: 12,
+    color: colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });

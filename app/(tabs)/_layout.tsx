@@ -26,7 +26,7 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           animation: 'none',
-          contentStyle: { backgroundColor: colors.blossomPink },
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         <Stack.Screen key="home" name="(home)" />
