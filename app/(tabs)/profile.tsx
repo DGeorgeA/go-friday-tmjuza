@@ -7,6 +7,8 @@ import BlossomBackground from '@/components/BlossomBackground';
 import { IconSymbol } from '@/components/IconSymbol';
 import { supabase } from '@/app/integrations/supabase/client';
 import { getCurrentLevel, userLevels } from '@/data/impulses';
+import { getUserBadges, BADGES } from '@/utils/badgeSystem';
+import { loadProgressFromSupabase, getLocalProgress } from '@/utils/progressTracking';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -14,8 +16,11 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState('');
   const [blossoms, setBlossoms] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [streakMultiplier, setStreakMultiplier] = useState(1.0);
   const [totalExercises, setTotalExercises] = useState(0);
   const [levelInfo, setLevelInfo] = useState({ level: 1, name: 'Seed', blossoms: 0, nextLevel: userLevels[1] });
+  const [badges, setBadges] = useState<any[]>([]);
+  const [exerciseCategories, setExerciseCategories] = useState<Record<string, number>>({});
 
   useEffect(() => {
     loadUserData();
@@ -29,6 +34,9 @@ export default function ProfileScreen() {
         setIsAuthenticated(true);
         setEmail(user.email || '');
         
+        // Load progress from Supabase
+        await loadProgressFromSupabase();
+        
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -38,6 +46,7 @@ export default function ProfileScreen() {
         if (profile) {
           setBlossoms(profile.blossoms || 0);
           setStreak(profile.streak || 0);
+          setStreakMultiplier(profile.streak_multiplier || 1.0);
           setLevelInfo(getCurrentLevel(profile.blossoms || 0));
         }
         
@@ -48,6 +57,25 @@ export default function ProfileScreen() {
           .eq('user_id', user.id);
         
         setTotalExercises(exercises?.length || 0);
+        
+        // Calculate exercise categories
+        const categories: Record<string, number> = {};
+        exercises?.forEach((ex) => {
+          categories[ex.hub_name] = (categories[ex.hub_name] || 0) + 1;
+        });
+        setExerciseCategories(categories);
+        
+        // Get badges
+        const userBadges = await getUserBadges(user.id);
+        setBadges(userBadges);
+      } else {
+        // Load local progress for non-authenticated users
+        const localProgress = await getLocalProgress();
+        setBlossoms(localProgress.totalBlossoms);
+        setStreak(localProgress.streakCounter);
+        setTotalExercises(localProgress.completedExercises.length);
+        setLevelInfo(getCurrentLevel(localProgress.totalBlossoms));
+        setExerciseCategories(localProgress.exerciseCategories);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -102,6 +130,13 @@ export default function ProfileScreen() {
     );
   };
 
+  const getStreakMultiplierText = () => {
+    if (streakMultiplier >= 2.0) return '2× multiplier';
+    if (streakMultiplier >= 1.5) return '1.5× multiplier';
+    if (streakMultiplier >= 1.2) return '1.2× multiplier';
+    return '';
+  };
+
   if (!isAuthenticated) {
     return (
       <BlossomBackground>
@@ -114,6 +149,22 @@ export default function ProfileScreen() {
               <Text style={styles.title}>Profile</Text>
               <Text style={styles.subtitle}>Sign in to track your journey</Text>
             </View>
+
+            {/* Show local progress */}
+            {totalExercises > 0 && (
+              <View style={styles.localProgressCard}>
+                <Text style={styles.localProgressTitle}>Local Progress</Text>
+                <Text style={styles.localProgressText}>
+                  {totalExercises} exercises completed
+                </Text>
+                <Text style={styles.localProgressText}>
+                  {blossoms} blossoms earned
+                </Text>
+                <Text style={styles.localProgressHint}>
+                  Sign in to sync and unlock badges
+                </Text>
+              </View>
+            )}
 
             <TouchableOpacity
               style={buttonStyles.primaryButton}
@@ -192,6 +243,9 @@ export default function ProfileScreen() {
               />
               <Text style={styles.statValue}>{streak}</Text>
               <Text style={styles.statLabel}>Day Streak</Text>
+              {streakMultiplier > 1.0 && (
+                <Text style={styles.multiplierText}>{getStreakMultiplierText()}</Text>
+              )}
             </View>
 
             <View style={styles.statCard}>
@@ -206,6 +260,48 @@ export default function ProfileScreen() {
             </View>
           </View>
 
+          {/* Badges Section */}
+          {badges.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Badges ({badges.length})</Text>
+              
+              <View style={styles.badgesGrid}>
+                {badges.map((badge, index) => {
+                  const badgeInfo = BADGES[badge.badge_id];
+                  return (
+                    <View key={index} style={styles.badgeCard}>
+                      <IconSymbol
+                        android_material_icon_name={badgeInfo?.icon || 'star'}
+                        ios_icon_name={badgeInfo?.icon || 'star'}
+                        size={32}
+                        color={colors.iconGray}
+                      />
+                      <Text style={styles.badgeName}>{badge.badge_name}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* Exercise Categories */}
+          {Object.keys(exerciseCategories).length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Exercise Categories</Text>
+              
+              <View style={styles.categoriesCard}>
+                {Object.entries(exerciseCategories).map(([category, count], index) => (
+                  <View key={index} style={styles.categoryRow}>
+                    <Text style={styles.categoryName}>
+                      {category.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    </Text>
+                    <Text style={styles.categoryCount}>{count}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Blossom Earning Guide */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Earn Blossoms</Text>
@@ -214,7 +310,19 @@ export default function ProfileScreen() {
               <Text style={styles.guideItem}>+5 🌸 Complete any exercise</Text>
               <Text style={styles.guideItem}>+10 🌸 Complete all 5 in a hub</Text>
               <Text style={styles.guideItem}>+15 🌸 First exercise of the day</Text>
+              <Text style={styles.guideItem}>+20 🌸 Unlock a badge</Text>
               <Text style={styles.guideItem}>+25 🌸 Break an urge successfully</Text>
+            </View>
+          </View>
+
+          {/* Streak Multipliers */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Streak Multipliers</Text>
+            
+            <View style={styles.guideCard}>
+              <Text style={styles.guideItem}>3 days in a row → 1.2× multiplier</Text>
+              <Text style={styles.guideItem}>7 days in a row → 1.5× multiplier</Text>
+              <Text style={styles.guideItem}>30 days in a row → 2× multiplier + Zen Discipline badge</Text>
             </View>
           </View>
 
@@ -278,6 +386,35 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.3,
+  },
+  localProgressCard: {
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1.5,
+    borderColor: colors.black,
+  },
+  localProgressTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.black,
+    marginBottom: 12,
+    letterSpacing: -0.3,
+  },
+  localProgressText: {
+    fontSize: 14,
+    fontWeight: '300',
+    color: colors.black,
+    marginBottom: 8,
+    letterSpacing: 0.2,
+  },
+  localProgressHint: {
+    fontSize: 12,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    marginTop: 8,
+    letterSpacing: 0.2,
   },
   levelCard: {
     backgroundColor: colors.white,
@@ -388,6 +525,13 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 0.2,
   },
+  multiplierText: {
+    fontSize: 10,
+    fontWeight: '400',
+    color: colors.black,
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
   section: {
     marginBottom: 32,
   },
@@ -397,6 +541,53 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 16,
     letterSpacing: -0.3,
+  },
+  badgesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  badgeCard: {
+    width: '30%',
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.black,
+  },
+  badgeName: {
+    fontSize: 10,
+    fontWeight: '300',
+    color: colors.black,
+    textAlign: 'center',
+    marginTop: 8,
+    letterSpacing: 0.2,
+  },
+  categoriesCard: {
+    backgroundColor: colors.white,
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: colors.black,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  categoryName: {
+    fontSize: 14,
+    fontWeight: '300',
+    color: colors.black,
+    letterSpacing: 0.2,
+  },
+  categoryCount: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.black,
+    letterSpacing: 0.2,
   },
   guideCard: {
     backgroundColor: colors.white,

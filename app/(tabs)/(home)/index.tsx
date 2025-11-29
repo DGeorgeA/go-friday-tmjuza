@@ -8,6 +8,7 @@ import BlossomBackground from '@/components/BlossomBackground';
 import { IconSymbol } from '@/components/IconSymbol';
 import { supabase } from '@/app/integrations/supabase/client';
 import { getCurrentLevel } from '@/data/impulses';
+import { syncProgressToSupabase, loadProgressFromSupabase, getLocalProgress } from '@/utils/progressTracking';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function HomeScreen() {
   const [blossoms, setBlossoms] = useState(0);
   const [levelInfo, setLevelInfo] = useState({ level: 1, name: 'Seed', blossoms: 0 });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [streakMultiplier, setStreakMultiplier] = useState(1.0);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -34,6 +36,12 @@ export default function HomeScreen() {
       if (user) {
         setIsAuthenticated(true);
         
+        // Sync local progress to Supabase
+        await syncProgressToSupabase();
+        
+        // Load progress from Supabase
+        await loadProgressFromSupabase();
+        
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -43,8 +51,15 @@ export default function HomeScreen() {
         if (profile) {
           setStreak(profile.streak || 0);
           setBlossoms(profile.blossoms || 0);
+          setStreakMultiplier(profile.streak_multiplier || 1.0);
           setLevelInfo(getCurrentLevel(profile.blossoms || 0));
         }
+      } else {
+        // Load local progress for non-authenticated users
+        const localProgress = await getLocalProgress();
+        setStreak(localProgress.streakCounter);
+        setBlossoms(localProgress.totalBlossoms);
+        setLevelInfo(getCurrentLevel(localProgress.totalBlossoms));
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -63,6 +78,14 @@ export default function HomeScreen() {
     router.push('/(auth)/login' as any);
   };
 
+  const getStreakText = () => {
+    if (streak === 0) return 'Start your journey';
+    if (streakMultiplier > 1.0) {
+      return `${streak}-day streak · ${streakMultiplier}× multiplier`;
+    }
+    return `${streak}-day streak`;
+  };
+
   return (
     <BlossomBackground>
       <View style={styles.container}>
@@ -76,11 +99,7 @@ export default function HomeScreen() {
             
             {isAuthenticated ? (
               <View style={styles.statsRow}>
-                <Text style={styles.streak}>{streak}-day streak</Text>
-                <Text style={styles.divider}>·</Text>
-                <Text style={styles.level}>{levelInfo.name}</Text>
-                <Text style={styles.divider}>·</Text>
-                <Text style={styles.blossoms}>{blossoms} 🌸</Text>
+                <Text style={styles.streak}>{getStreakText()}</Text>
               </View>
             ) : (
               <TouchableOpacity onPress={handleAuthPress} activeOpacity={0.7}>
@@ -155,23 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '300',
     color: colors.textSecondary,
-    letterSpacing: 0.2,
-  },
-  divider: {
-    fontSize: 13,
-    fontWeight: '300',
-    color: colors.textSecondary,
-  },
-  level: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.black,
-    letterSpacing: 0.2,
-  },
-  blossoms: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: colors.black,
     letterSpacing: 0.2,
   },
   authPrompt: {

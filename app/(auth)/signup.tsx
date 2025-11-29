@@ -1,19 +1,20 @@
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import BlossomBackground from '@/components/BlossomBackground';
 import { supabase } from '@/app/integrations/supabase/client';
+import { syncProgressToSupabase } from '@/utils/progressTracking';
 
-export default function SignupScreen() {
+export default function SignUpScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
+  const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -40,22 +41,30 @@ export default function SignupScreen() {
       });
 
       if (error) {
-        Alert.alert('Signup Failed', error.message);
+        Alert.alert('Sign Up Failed', error.message);
       } else if (data.user) {
-        // Create profile
-        await supabase.from('profiles').insert([
+        // Create profile for the user
+        const { error: profileError } = await supabase.from('profiles').insert([
           {
             id: data.user.id,
             email: data.user.email,
             blossoms: 0,
             level: 1,
             streak: 0,
+            streak_multiplier: 1.0,
           },
         ]);
 
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+
+        // Sync any local progress to Supabase
+        await syncProgressToSupabase();
+
         Alert.alert(
-          'Success!',
-          'Please check your email to verify your account before logging in.',
+          'Success',
+          'Account created! Please check your email to verify your account.',
           [
             {
               text: 'OK',
@@ -64,9 +73,8 @@ export default function SignupScreen() {
           ]
         );
       }
-    } catch (err) {
-      console.error('Signup error:', err);
-      Alert.alert('Error', 'An unexpected error occurred');
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
     }
@@ -75,17 +83,17 @@ export default function SignupScreen() {
   return (
     <BlossomBackground>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Text style={styles.logo}>GoFriday</Text>
-            <Text style={styles.subtitle}>Begin your journey</Text>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Start your journey to calm</Text>
           </View>
 
           <View style={styles.form}>
@@ -93,13 +101,13 @@ export default function SignupScreen() {
               <Text style={styles.label}>Email</Text>
               <TextInput
                 style={styles.input}
-                value={email}
-                onChangeText={setEmail}
                 placeholder="your@email.com"
                 placeholderTextColor={colors.textSecondary}
-                keyboardType="email-address"
+                value={email}
+                onChangeText={setEmail}
                 autoCapitalize="none"
-                autoCorrect={false}
+                keyboardType="email-address"
+                autoComplete="email"
               />
             </View>
 
@@ -107,12 +115,12 @@ export default function SignupScreen() {
               <Text style={styles.label}>Password</Text>
               <TextInput
                 style={styles.input}
-                value={password}
-                onChangeText={setPassword}
                 placeholder="At least 6 characters"
                 placeholderTextColor={colors.textSecondary}
+                value={password}
+                onChangeText={setPassword}
                 secureTextEntry
-                autoCapitalize="none"
+                autoComplete="password-new"
               />
             </View>
 
@@ -120,40 +128,39 @@ export default function SignupScreen() {
               <Text style={styles.label}>Confirm Password</Text>
               <TextInput
                 style={styles.input}
+                placeholder="Re-enter your password"
+                placeholderTextColor={colors.textSecondary}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
-                placeholder="Re-enter password"
-                placeholderTextColor={colors.textSecondary}
                 secureTextEntry
-                autoCapitalize="none"
+                autoComplete="password-new"
               />
             </View>
 
             <TouchableOpacity
               style={[buttonStyles.primaryButton, loading && styles.buttonDisabled]}
-              onPress={handleSignup}
+              onPress={handleSignUp}
               disabled={loading}
               activeOpacity={0.8}
             >
               <Text style={buttonStyles.primaryButtonText}>
-                {loading ? 'Creating account...' : 'Sign Up'}
+                {loading ? 'Creating Account...' : 'Sign Up'}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.linkButton}
-              onPress={() => router.push('/(auth)/login' as any)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.linkText}>Already have an account? Log in</Text>
-            </TouchableOpacity>
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account?</Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/login' as any)}>
+                <Text style={styles.linkText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
-              style={styles.skipButton}
-              onPress={() => router.replace('/(tabs)/(home)/' as any)}
+              style={styles.backButton}
+              onPress={() => router.back()}
               activeOpacity={0.7}
             >
-              <Text style={styles.skipText}>Continue without account</Text>
+              <Text style={styles.backButtonText}>← Back to Home</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -170,23 +177,24 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingVertical: 80,
+    paddingVertical: 60,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 64,
+    marginBottom: 48,
   },
-  logo: {
-    fontSize: 48,
+  title: {
+    fontSize: 32,
     fontWeight: '700',
     color: colors.black,
-    marginBottom: 16,
-    letterSpacing: -1,
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '300',
     color: colors.textSecondary,
+    textAlign: 'center',
     letterSpacing: 0.3,
   },
   form: {
@@ -206,32 +214,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderWidth: 1.5,
     borderColor: colors.black,
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    fontSize: 16,
-    fontWeight: '300',
-    color: colors.black,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  linkButton: {
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  linkText: {
-    fontSize: 14,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 15,
     fontWeight: '300',
     color: colors.black,
     letterSpacing: 0.2,
   },
-  skipButton: {
-    alignItems: 'center',
-    marginTop: 16,
+  buttonDisabled: {
+    opacity: 0.5,
   },
-  skipText: {
-    fontSize: 13,
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 8,
+  },
+  footerText: {
+    fontSize: 14,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    letterSpacing: 0.2,
+  },
+  linkText: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: colors.black,
+    textDecorationLine: 'underline',
+    letterSpacing: 0.2,
+  },
+  backButton: {
+    marginTop: 32,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 14,
     fontWeight: '300',
     color: colors.textSecondary,
     letterSpacing: 0.2,

@@ -9,6 +9,8 @@ import BlossomBackground from '@/components/BlossomBackground';
 import { IconSymbol } from '@/components/IconSymbol';
 import { supabase } from '@/app/integrations/supabase/client';
 import { awardBlossoms, checkFirstExerciseOfDay, checkHubSequenceCompletion, updateStreak } from '@/utils/blossomRewards';
+import { checkAndAwardBadges } from '@/utils/badgeSystem';
+import { updateLocalProgressAfterExercise, syncProgressToSupabase } from '@/utils/progressTracking';
 
 const STEP_DURATION = 2000; // 2 seconds per step
 
@@ -140,10 +142,10 @@ export default function ExerciseScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Calculate blossoms earned
+      let blossomsEarned = 5; // Base for completing exercise
+      
       if (user) {
-        // Calculate blossoms earned
-        let blossomsEarned = 5; // Base for completing exercise
-        
         // Check if this is first exercise of the day
         const isFirstToday = await checkFirstExerciseOfDay(user.id);
         if (isFirstToday) {
@@ -193,9 +195,33 @@ export default function ExerciseScreen() {
             await awardBlossoms(user.id, 10, `Completed all exercises in ${hubId}`);
           }
         }
+        
+        // Check and award badges
+        await checkAndAwardBadges(user.id);
+        
+        // Sync progress to Supabase
+        await syncProgressToSupabase();
+      } else {
+        // User not logged in - save locally only
+        await updateLocalProgressAfterExercise(
+          hubId as string,
+          exercise?.name || '',
+          Number(exerciseIndex),
+          rating,
+          blossomsEarned
+        );
       }
     } catch (error) {
       console.error('Error saving exercise completion:', error);
+      
+      // Fallback to local storage
+      await updateLocalProgressAfterExercise(
+        hubId as string,
+        exercise?.name || '',
+        Number(exerciseIndex),
+        rating,
+        5
+      );
     }
     
     // Return to home
