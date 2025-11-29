@@ -64,6 +64,7 @@ const quickCalmStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '400',
     letterSpacing: 0.5,
+    fontFamily: 'NotoSansJP_400Regular',
   },
 });
 
@@ -81,6 +82,12 @@ export default function TabLayout() {
       icon: 'person',
       label: 'Profile',
     },
+    {
+      name: 'settings',
+      route: '/(tabs)/settings',
+      icon: 'settings',
+      label: 'Settings',
+    },
   ];
 
   return (
@@ -94,6 +101,7 @@ export default function TabLayout() {
       >
         <Stack.Screen key="home" name="(home)" />
         <Stack.Screen key="profile" name="profile" />
+        <Stack.Screen key="settings" name="settings" />
       </Stack>
       <QuickCalmButton />
       <FloatingTabBar tabs={tabs} />

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ImageBackground, AccessibilityInfo } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { impulseHubs } from '@/data/impulses';
@@ -11,8 +11,14 @@ import { supabase } from '@/app/integrations/supabase/client';
 import { awardBlossoms, checkFirstExerciseOfDay, checkHubSequenceCompletion, updateStreak } from '@/utils/blossomRewards';
 import { checkAndAwardBadges } from '@/utils/badgeSystem';
 import { updateLocalProgressAfterExercise, syncProgressToSupabase } from '@/utils/progressTracking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STEP_DURATION = 2000; // 2 seconds per step
+// Step speed constants (in milliseconds)
+const STEP_SPEED_NORMAL = 2000; // 2 seconds
+const STEP_SPEED_SLOW1 = 4000; // 4 seconds
+const STEP_SPEED_SLOW2 = 6000; // 6 seconds
+const STEP_SPEED_FAST = 1000; // 1 second (for long press)
+const INTERVAL_DURATION = 5000; // 5 seconds between steps
 
 // B&W motivational photo URLs (Unsplash)
 const BW_PHOTOS = [
@@ -31,16 +37,28 @@ export default function ExerciseScreen() {
   const exercise = hub?.exercises[Number(exerciseIndex)];
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [showPauseOverlay, setShowPauseOverlay] = useState(false);
+  const [showInterval, setShowInterval] = useState(false);
+  const [intervalCountdown, setIntervalCountdown] = useState(5);
+  const [slowdownLevel, setSlowdownLevel] = useState(0); // 0 = 2s, 1 = 4s, 2 = 6s
+  const [stepSpeed, setStepSpeed] = useState(STEP_SPEED_NORMAL);
+  const [showBlossoms, setShowBlossoms] = useState(true);
+  const [showBackgroundPhotos, setShowBackgroundPhotos] = useState(true);
+  const [fastGesturesEnabled, setFastGesturesEnabled] = useState(true);
+  const [resetSlowdownEachSession, setResetSlowdownEachSession] = useState(true);
   
   const breatheAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
   const photoIndex = useRef(Math.floor(Math.random() * BW_PHOTOS.length)).current;
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    loadSettings();
+    
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
@@ -70,8 +88,38 @@ export default function ExerciseScreen() {
       if (stepTimerRef.current) {
         clearTimeout(stepTimerRef.current);
       }
+      if (intervalTimerRef.current) {
+        clearTimeout(intervalTimerRef.current);
+      }
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current);
+      }
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+      }
     };
   }, [breatheAnim, fadeAnim]);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await AsyncStorage.getItem('@gofriday_settings');
+      if (settings) {
+        const parsed = JSON.parse(settings);
+        setShowBlossoms(parsed.showBlossoms !== false);
+        setShowBackgroundPhotos(parsed.showBackgroundPhotos !== false);
+        setFastGesturesEnabled(parsed.fastGesturesEnabled !== false);
+        setResetSlowdownEachSession(parsed.resetSlowdownEachSession !== false);
+        
+        // Reset slowdown if setting is enabled
+        if (parsed.resetSlowdownEachSession !== false) {
+          setSlowdownLevel(0);
+          setStepSpeed(STEP_SPEED_NORMAL);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   const startAutoProgress = () => {
     if (!exercise) return;
@@ -83,52 +131,159 @@ export default function ExerciseScreen() {
           setShowFeedback(true);
           return prev;
         }
-        if (!isPaused) {
-          startAutoProgress();
-        }
-        return nextStep;
+        // Show 5-second interval before next step
+        setShowInterval(true);
+        setIntervalCountdown(5);
+        startIntervalCountdown();
+        return prev;
       });
-    }, STEP_DURATION);
+    }, stepSpeed);
   };
 
-  const handlePause = () => {
-    const newPausedState = !isPaused;
-    setIsPaused(newPausedState);
-    setShowPauseOverlay(newPausedState);
+  const startIntervalCountdown = () => {
+    let countdown = 5;
+    setIntervalCountdown(countdown);
     
-    if (stepTimerRef.current) {
-      clearTimeout(stepTimerRef.current);
+    const countdownInterval = setInterval(() => {
+      countdown -= 1;
+      setIntervalCountdown(countdown);
+      
+      if (countdown <= 0) {
+        clearInterval(countdownInterval);
+        setShowInterval(false);
+        setCurrentStep((prev) => prev + 1);
+        startAutoProgress();
+      }
+    }, 1000);
+    
+    intervalTimerRef.current = countdownInterval as any;
+  };
+
+  const handleSlowdown = () => {
+    // Cycle through slowdown levels: 0 -> 1 -> 2 -> 0
+    const newLevel = (slowdownLevel + 1) % 3;
+    setSlowdownLevel(newLevel);
+    
+    // Update step speed
+    switch (newLevel) {
+      case 0:
+        setStepSpeed(STEP_SPEED_NORMAL);
+        break;
+      case 1:
+        setStepSpeed(STEP_SPEED_SLOW1);
+        break;
+      case 2:
+        setStepSpeed(STEP_SPEED_SLOW2);
+        break;
     }
     
-    if (!newPausedState) {
-      // Resume
+    // Restart timer with new speed
+    if (stepTimerRef.current) {
+      clearTimeout(stepTimerRef.current);
       startAutoProgress();
     }
   };
 
-  const handleFastForward = () => {
+  const handleFastForwardPress = () => {
+    if (!fastGesturesEnabled) {
+      handleFastForwardSingle();
+      return;
+    }
+    
+    // Handle tap count for double tap detection
+    tapCountRef.current += 1;
+    
+    if (tapCountRef.current === 1) {
+      // First tap - wait for potential second tap
+      tapTimerRef.current = setTimeout(() => {
+        // Single tap - advance to next step
+        handleFastForwardSingle();
+        tapCountRef.current = 0;
+      }, 300);
+    } else if (tapCountRef.current === 2) {
+      // Double tap - jump to final step
+      if (tapTimerRef.current) {
+        clearTimeout(tapTimerRef.current);
+      }
+      handleFastForwardFinal();
+      tapCountRef.current = 0;
+    }
+  };
+
+  const handleFastForwardSingle = () => {
     if (!exercise) return;
     
+    // Skip interval if showing
+    if (showInterval) {
+      if (intervalTimerRef.current) {
+        clearInterval(intervalTimerRef.current);
+      }
+      setShowInterval(false);
+      setCurrentStep((prev) => prev + 1);
+      
+      if (currentStep + 1 >= exercise.steps.length) {
+        setShowFeedback(true);
+      } else {
+        startAutoProgress();
+      }
+      return;
+    }
+    
+    // Clear current timer
     if (stepTimerRef.current) {
       clearTimeout(stepTimerRef.current);
     }
     
+    // Advance to next step
     setCurrentStep((prev) => {
       const nextStep = prev + 1;
       if (nextStep >= exercise.steps.length) {
         setShowFeedback(true);
         return prev;
       }
-      if (!isPaused) {
-        startAutoProgress();
-      }
-      return nextStep;
+      // Show interval before next step
+      setShowInterval(true);
+      setIntervalCountdown(5);
+      startIntervalCountdown();
+      return prev;
     });
+  };
+
+  const handleFastForwardFinal = () => {
+    if (!exercise) return;
+    
+    // Clear all timers
+    if (stepTimerRef.current) {
+      clearTimeout(stepTimerRef.current);
+    }
+    if (intervalTimerRef.current) {
+      clearInterval(intervalTimerRef.current);
+    }
+    
+    // Jump to feedback
+    setShowInterval(false);
+    setShowFeedback(true);
+  };
+
+  const handleFastForwardLongPress = () => {
+    if (!fastGesturesEnabled) return;
+    
+    // Long press - compress steps to 1s
+    setStepSpeed(STEP_SPEED_FAST);
+    
+    // Restart timer with fast speed
+    if (stepTimerRef.current) {
+      clearTimeout(stepTimerRef.current);
+      startAutoProgress();
+    }
   };
 
   const handleClose = () => {
     if (stepTimerRef.current) {
       clearTimeout(stepTimerRef.current);
+    }
+    if (intervalTimerRef.current) {
+      clearInterval(intervalTimerRef.current);
     }
     router.back();
   };
@@ -228,7 +383,7 @@ export default function ExerciseScreen() {
 
   if (!exercise) {
     return (
-      <BlossomBackground>
+      <BlossomBackground showBlossoms={showBlossoms}>
         <View style={styles.container}>
           <Text style={styles.errorText}>Exercise not found</Text>
         </View>
@@ -246,9 +401,59 @@ export default function ExerciseScreen() {
     outputRange: [0.3, 1, 0.3],
   });
 
+  // Show 5-second interval screen
+  if (showInterval) {
+    return (
+      <BlossomBackground showBlossoms={showBlossoms} showPaperTexture={false}>
+        <View style={styles.container}>
+          {/* B&W Photo Background */}
+          {showBackgroundPhotos && (
+            <ImageBackground
+              source={{ uri: BW_PHOTOS[photoIndex] }}
+              style={styles.photoBackground}
+              blurRadius={8}
+              imageStyle={styles.photoImage}
+            />
+          )}
+
+          {/* Top-right controls */}
+          <View style={styles.controls}>
+            {/* Fast Forward Button */}
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={handleFastForwardSingle}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.controlIcon}>⏩</Text>
+            </TouchableOpacity>
+
+            {/* Close Button */}
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={handleClose}
+              activeOpacity={0.7}
+            >
+              <IconSymbol
+                android_material_icon_name="close"
+                ios_icon_name="xmark"
+                size={24}
+                color={colors.black}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <Animated.View style={[styles.intervalContent, { opacity: fadeAnim }]}>
+            <Text style={styles.intervalText}>Next step in {intervalCountdown}...</Text>
+          </Animated.View>
+        </View>
+      </BlossomBackground>
+    );
+  }
+
+  // Show feedback screen
   if (showFeedback) {
     return (
-      <BlossomBackground>
+      <BlossomBackground showBlossoms={showBlossoms}>
         <TouchableOpacity 
           style={styles.container} 
           activeOpacity={1}
@@ -279,53 +484,41 @@ export default function ExerciseScreen() {
   }
 
   return (
-    <BlossomBackground showPaperTexture={false}>
+    <BlossomBackground showBlossoms={showBlossoms} showPaperTexture={false}>
       <View style={styles.container}>
         {/* B&W Photo Background (blurred, low opacity) */}
-        <ImageBackground
-          source={{ uri: BW_PHOTOS[photoIndex] }}
-          style={styles.photoBackground}
-          blurRadius={8}
-          imageStyle={styles.photoImage}
-        />
+        {showBackgroundPhotos && (
+          <ImageBackground
+            source={{ uri: BW_PHOTOS[photoIndex] }}
+            style={styles.photoBackground}
+            blurRadius={8}
+            imageStyle={styles.photoImage}
+          />
+        )}
 
-        {/* Top-right controls - Always visible with Slowdown/Pause button */}
+        {/* Top-right controls - 3 icons horizontally aligned */}
         <View style={styles.controls}>
-          {/* Slowdown/Pause Button - Prominent circular button */}
+          {/* Slowdown Button */}
           <TouchableOpacity
-            style={[styles.pauseButton, isPaused && styles.pauseButtonActive]}
-            onPress={handlePause}
+            style={[
+              styles.controlButton,
+              slowdownLevel > 0 && styles.controlButtonActive,
+            ]}
+            onPress={handleSlowdown}
             activeOpacity={0.7}
           >
-            <View style={styles.pauseIconContainer}>
-              {isPaused ? (
-                <IconSymbol
-                  android_material_icon_name="play-arrow"
-                  ios_icon_name="play.fill"
-                  size={28}
-                  color={colors.blossomPink}
-                />
-              ) : (
-                <View style={styles.pauseIcon}>
-                  <View style={styles.pauseBar} />
-                  <View style={styles.pauseBar} />
-                </View>
-              )}
-            </View>
+            <Text style={styles.controlIcon}>⏪</Text>
           </TouchableOpacity>
 
           {/* Fast Forward Button */}
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={handleFastForward}
+            onPress={handleFastForwardPress}
+            onLongPress={handleFastForwardLongPress}
+            delayLongPress={500}
             activeOpacity={0.7}
           >
-            <IconSymbol
-              android_material_icon_name="fast-forward"
-              ios_icon_name="forward.fill"
-              size={24}
-              color={colors.black}
-            />
+            <Text style={styles.controlIcon}>⏩</Text>
           </TouchableOpacity>
 
           {/* Close Button */}
@@ -342,17 +535,6 @@ export default function ExerciseScreen() {
             />
           </TouchableOpacity>
         </View>
-
-        {/* Pause overlay */}
-        {showPauseOverlay && (
-          <TouchableOpacity
-            style={styles.pauseOverlay}
-            onPress={handlePause}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.pauseText}>Tap to continue</Text>
-          </TouchableOpacity>
-        )}
 
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {/* Large breathing circle */}
@@ -408,12 +590,12 @@ const styles = StyleSheet.create({
     gap: 12,
     zIndex: 10,
   },
-  pauseButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  controlButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.white,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
@@ -423,60 +605,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  pauseButtonActive: {
+  controlButtonActive: {
     borderColor: colors.blossomPink,
     borderWidth: 2.5,
     backgroundColor: '#FFF5F8',
+    shadowColor: colors.blossomPink,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
-  pauseIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pauseIcon: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pauseBar: {
-    width: 4,
-    height: 18,
-    backgroundColor: colors.black,
-    borderRadius: 2,
-  },
-  controlButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.black,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pauseOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
-  pauseText: {
+  controlIcon: {
     fontSize: 20,
-    fontWeight: '300',
-    color: colors.black,
-    letterSpacing: 0.5,
-    fontFamily: 'NotoSansJP_300Light',
   },
   content: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+  },
+  intervalContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  intervalText: {
+    fontSize: 24,
+    fontWeight: '300',
+    color: colors.black,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    fontFamily: 'NotoSansJP_300Light',
   },
   breathingContainer: {
     alignItems: 'center',

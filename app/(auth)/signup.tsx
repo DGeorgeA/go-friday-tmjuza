@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import BlossomBackground from '@/components/BlossomBackground';
@@ -13,6 +13,25 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    if (showSuccess) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }).start();
+
+      // Auto-redirect after 2 seconds
+      const timer = setTimeout(() => {
+        handleContinue();
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, fadeAnim]);
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -62,16 +81,8 @@ export default function SignUpScreen() {
         // Sync any local progress to Supabase
         await syncProgressToSupabase();
 
-        Alert.alert(
-          'Success',
-          'Account created! Please check your email to verify your account.',
-          [
-            {
-              text: 'OK',
-              onPress: () => router.replace('/(auth)/login' as any),
-            },
-          ]
-        );
+        // Show success card
+        setShowSuccess(true);
       }
     } catch (error: any) {
       Alert.alert('Error', error.message);
@@ -80,8 +91,34 @@ export default function SignUpScreen() {
     }
   };
 
+  const handleContinue = () => {
+    router.replace('/(tabs)/(home)/' as any);
+  };
+
+  if (showSuccess) {
+    return (
+      <BlossomBackground showBlossoms={true}>
+        <View style={styles.container}>
+          <Animated.View style={[styles.successCard, { opacity: fadeAnim }]}>
+            <Text style={styles.successTitle}>You&apos;re all signed up!</Text>
+            <Text style={styles.successSubtitle}>
+              World&apos;s First Impulse Manager welcomes you.
+            </Text>
+            <TouchableOpacity
+              style={buttonStyles.primaryButton}
+              onPress={handleContinue}
+              activeOpacity={0.8}
+            >
+              <Text style={buttonStyles.primaryButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </BlossomBackground>
+    );
+  }
+
   return (
-    <BlossomBackground>
+    <BlossomBackground showBlossoms={true}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -189,6 +226,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 12,
     letterSpacing: -0.5,
+    fontFamily: 'NotoSerifJP_700Bold',
   },
   subtitle: {
     fontSize: 15,
@@ -196,6 +234,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.3,
+    fontFamily: 'NotoSansJP_300Light',
   },
   form: {
     width: '100%',
@@ -209,6 +248,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 8,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_400Regular',
   },
   input: {
     backgroundColor: colors.white,
@@ -220,6 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.black,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -236,6 +277,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.textSecondary,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   linkText: {
     fontSize: 14,
@@ -243,6 +285,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     textDecorationLine: 'underline',
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_400Regular',
   },
   backButton: {
     marginTop: 32,
@@ -253,5 +296,30 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.textSecondary,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
+  },
+  successCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  successTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.black,
+    textAlign: 'center',
+    marginBottom: 16,
+    letterSpacing: -0.5,
+    fontFamily: 'NotoSerifJP_700Bold',
+  },
+  successSubtitle: {
+    fontSize: 16,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 48,
+    letterSpacing: 0.3,
+    fontFamily: 'NotoSansJP_300Light',
   },
 });

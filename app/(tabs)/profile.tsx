@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
 import BlossomBackground from '@/components/BlossomBackground';
+import MonkhoodBadge from '@/components/MonkhoodBadge';
 import { IconSymbol } from '@/components/IconSymbol';
 import { supabase } from '@/app/integrations/supabase/client';
 import { getCurrentLevel, userLevels } from '@/data/impulses';
@@ -139,13 +140,14 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <BlossomBackground showPaperTexture={true}>
+      <BlossomBackground showBlossoms={true} showPaperTexture={true}>
         <View style={styles.container}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.header}>
+              <MonkhoodBadge level={1} unlocked={false} size={80} />
               <Text style={styles.title}>Profile</Text>
               <Text style={styles.subtitle}>Sign in to track your journey</Text>
             </View>
@@ -194,13 +196,14 @@ export default function ProfileScreen() {
     : 100;
 
   return (
-    <BlossomBackground showPaperTexture={true}>
+    <BlossomBackground showBlossoms={true} showPaperTexture={true}>
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
+            <MonkhoodBadge level={levelInfo.level} unlocked={true} size={80} />
             <Text style={styles.title}>Profile</Text>
             <Text style={styles.subtitle}>{email}</Text>
           </View>
@@ -332,6 +335,28 @@ export default function ProfileScreen() {
             
             <TouchableOpacity
               style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/settings' as any)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.menuItemLeft}>
+                <IconSymbol
+                  android_material_icon_name="settings"
+                  ios_icon_name="gear"
+                  size={24}
+                  color={colors.iconGray}
+                />
+                <Text style={styles.menuItemText}>Settings</Text>
+              </View>
+              <IconSymbol
+                android_material_icon_name="chevron-right"
+                ios_icon_name="chevron.right"
+                size={20}
+                color={colors.iconGray}
+              />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.menuItem}
               onPress={handleLogout}
               activeOpacity={0.7}
             >
@@ -377,8 +402,10 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: '700',
     color: colors.black,
+    marginTop: 16,
     marginBottom: 8,
     letterSpacing: -0.5,
+    fontFamily: 'NotoSerifJP_700Bold',
   },
   subtitle: {
     fontSize: 14,
@@ -386,6 +413,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.3,
+    fontFamily: 'NotoSansJP_300Light',
   },
   localProgressCard: {
     backgroundColor: colors.white,
@@ -401,6 +429,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 12,
     letterSpacing: -0.3,
+    fontFamily: 'NotoSerifJP_700Bold',
   },
   localProgressText: {
     fontSize: 14,
@@ -408,6 +437,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 8,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   localProgressHint: {
     fontSize: 12,
@@ -415,6 +445,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 8,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   levelCard: {
     backgroundColor: colors.white,
@@ -436,12 +467,14 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 4,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   levelName: {
     fontSize: 24,
     fontWeight: '700',
     color: colors.black,
     letterSpacing: -0.5,
+    fontFamily: 'NotoSerifJP_700Bold',
   },
   blossomCount: {
     fontSize: 28,
@@ -467,6 +500,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     letterSpacing: 0.2,
     marginBottom: 24,
+    fontFamily: 'NotoSansJP_300Light',
   },
   plantSection: {
     alignItems: 'center',
@@ -525,6 +559,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.textSecondary,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   multiplierText: {
     fontSize: 10,
@@ -532,6 +567,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginTop: 4,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_400Regular',
   },
   section: {
     marginBottom: 32,
@@ -542,6 +578,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     marginBottom: 16,
     letterSpacing: -0.3,
+    fontFamily: 'NotoSerifJP_700Bold',
   },
   badgesGrid: {
     flexDirection: 'row',
@@ -564,6 +601,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 8,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   categoriesCard: {
     backgroundColor: colors.white,
@@ -583,6 +621,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: colors.black,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_300Light',
   },
   categoryCount: {
     fontSize: 14,
@@ -604,6 +643,7 @@ const styles = StyleSheet.create({
     color: colors.black,
     letterSpacing: 0.2,
     lineHeight: 20,
+    fontFamily: 'NotoSansJP_300Light',
   },
   menuItem: {
     flexDirection: 'row',
@@ -626,6 +666,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: colors.black,
     letterSpacing: 0.2,
+    fontFamily: 'NotoSansJP_400Regular',
   },
   bottomSpacer: {
     height: 40,

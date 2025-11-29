@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '@/styles/commonStyles';
 import { impulses } from '@/data/impulses';
 import BlossomBackground from '@/components/BlossomBackground';
@@ -87,14 +88,23 @@ export default function HomeScreen() {
   };
 
   return (
-    <BlossomBackground showPaperTexture={true}>
+    <BlossomBackground showBlossoms={true} showPaperTexture={true}>
       <View style={styles.container}>
+        {/* Gentle color gleam above hero section */}
+        <LinearGradient
+          colors={['rgba(255,141,170,0.08)', 'transparent']}
+          style={styles.gleam}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+        
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
             <Text style={styles.logo}>GoFriday</Text>
+            <Text style={styles.tagline}>World&apos;s First Impulse Manager</Text>
             <Text style={styles.subtitle}>Calm impulses gently</Text>
             
             {isAuthenticated ? (
@@ -141,6 +151,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  gleam: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 250,
+    zIndex: 0,
+  },
   scrollContent: {
     paddingTop: 80,
     paddingHorizontal: 32,
@@ -154,12 +172,21 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: '700',
     color: colors.black,
-    marginBottom: 16,
+    marginBottom: 12,
     letterSpacing: -1,
     fontFamily: 'NotoSerifJP_700Bold', // Traditional Japanese font
   },
+  tagline: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: colors.black,
+    textAlign: 'center',
+    marginBottom: 8,
+    letterSpacing: 0.3,
+    fontFamily: 'NotoSerifJP_400Regular',
+  },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '300',
     color: colors.textSecondary,
     textAlign: 'center',
