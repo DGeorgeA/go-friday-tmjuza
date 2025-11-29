@@ -1,18 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, ImageBackground, AccessibilityInfo, Platform } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ImageBackground, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '@/styles/commonStyles';
-import { impulseHubs } from '@/data/impulses';
-import { ImpulseType } from '@/types/impulse';
 import BlossomBackground from '@/components/BlossomBackground';
-import { IconSymbol } from '@/components/IconSymbol';
-import { supabase } from '@/app/integrations/supabase/client';
-import { awardBlossoms, checkFirstExerciseOfDay, checkHubSequenceCompletion, updateStreak } from '@/utils/blossomRewards';
-import { checkAndAwardBadges } from '@/utils/badgeSystem';
-import { updateLocalProgressAfterExercise, syncProgressToSupabase } from '@/utils/progressTracking';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Step speed constants (in milliseconds)
 const STEP_SPEED_NORMAL = 2000; // 2 seconds (1x)
@@ -23,33 +14,29 @@ const INTERVAL_DURATION = 5000; // 5 seconds between steps
 
 // B&W motivational photo URLs (Unsplash)
 const BW_PHOTOS: Record<string, string> = {
-  'stop-smoking': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Mountain landscape
-  'move-body': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80', // Mountain path
-  'eat-awareness': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', // Forest path
-  'return-calm': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', // Nature landscape
-  'steady-breath': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80', // Nature scene
-  'unplug-refocus': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', // Calm interior
+  'stop_smoking': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+  'move_body': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80',
+  'eat_awareness': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80',
+  'return_calm': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80',
+  'steady_breath': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80',
+  'unplug_refocus': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80',
+  'default': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
 };
 
-interface ExerciseStep {
+interface Exercise {
   id: string;
   text: string;
   baseDurationSeconds?: number;
 }
 
-export default function ExerciseScreen() {
-  const router = useRouter();
-  const { hubId, exerciseIndex } = useLocalSearchParams();
-  const hub = impulseHubs[hubId as ImpulseType];
-  const exercise = hub?.exercises[Number(exerciseIndex)];
+interface ExercisePlayerProps {
+  hub: string;
+  exercises: Exercise[];
+  onClose: () => void;
+  onComplete: (summary: any) => void;
+}
 
-  // Convert exercise steps to ExerciseStep format
-  const exercises: ExerciseStep[] = exercise?.steps.map((step, idx) => ({
-    id: `step-${idx}`,
-    text: step,
-    baseDurationSeconds: 2, // Default 2 seconds
-  })) || [];
-
+export default function ExercisePlayer({ hub, exercises, onClose, onComplete }: ExercisePlayerProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(exercises[0]?.baseDurationSeconds || 2);
   const [showInterval, setShowInterval] = useState(false);
@@ -57,8 +44,6 @@ export default function ExerciseScreen() {
   const [slowdownLevel, setSlowdownLevel] = useState(0); // 0=1x(2s), 1=2x(4s), 2=3x(6s)
   const [isAccelerated, setIsAccelerated] = useState(false); // Long-press acceleration
   const [showFeedback, setShowFeedback] = useState(false);
-  const [showBlossoms, setShowBlossoms] = useState(true);
-  const [showBackgroundPhotos, setShowBackgroundPhotos] = useState(true);
   
   const breatheAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -78,8 +63,6 @@ export default function ExerciseScreen() {
   };
 
   useEffect(() => {
-    loadSettings();
-    
     // Fade in animation
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -105,32 +88,21 @@ export default function ExerciseScreen() {
 
     // Emit exercise_started event
     emitAnalyticsEvent('exercise_started', {
-      hub: hubId,
-      exercise_id: exercise?.name,
+      hub,
+      exercise_id: exercises[0]?.id,
       step_index: 0,
       timestamp: new Date().toISOString(),
     });
 
-    // Auto-start the exercise
-    startStep(0);
+    // Auto-start the exercise (within 150ms)
+    setTimeout(() => {
+      startStep(0);
+    }, 50);
 
     return () => {
       clearAllTimers();
     };
   }, []);
-
-  const loadSettings = async () => {
-    try {
-      const settings = await AsyncStorage.getItem('@gofriday_settings');
-      if (settings) {
-        const parsed = JSON.parse(settings);
-        setShowBlossoms(parsed.showBlossoms !== false);
-        setShowBackgroundPhotos(parsed.showBackgroundPhotos !== false);
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-    }
-  };
 
   const clearAllTimers = () => {
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
@@ -172,16 +144,23 @@ export default function ExerciseScreen() {
       setIntervalCountdown(5);
       startIntervalCountdown(stepIndex + 1);
     } else {
-      // No more steps - show feedback
-      setShowFeedback(true);
+      // No more steps - show feedback or complete
+      const duration = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000);
       
       // Emit exercise_completed event
       emitAnalyticsEvent('exercise_completed', {
-        hub: hubId,
-        exercise_id: exercise?.name,
+        hub,
+        exercise_id: exercises[stepIndex]?.id,
         step_index: stepIndex,
         timestamp: new Date().toISOString(),
-        duration_seconds: Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000),
+        duration_seconds: duration,
+      });
+
+      // Call onComplete callback
+      onComplete({
+        completed: true,
+        duration_seconds: duration,
+        steps_completed: exercises.length,
       });
     }
   };
@@ -217,8 +196,8 @@ export default function ExerciseScreen() {
 
     // Emit analytics event
     emitAnalyticsEvent('exercise_slowdown_changed', {
-      hub: hubId,
-      exercise_id: exercise?.name,
+      hub,
+      exercise_id: exercises[currentStepIndex]?.id,
       step_index: currentStepIndex,
       timestamp: new Date().toISOString(),
       oldSpeed: oldSpeed === 0 ? '1x' : oldSpeed === 1 ? '2x' : '3x',
@@ -258,8 +237,8 @@ export default function ExerciseScreen() {
   const handleFastForwardSingle = () => {
     // Emit analytics event
     emitAnalyticsEvent('exercise_fastforward', {
-      hub: hubId,
-      exercise_id: exercise?.name,
+      hub,
+      exercise_id: exercises[currentStepIndex]?.id,
       step_index: currentStepIndex,
       timestamp: new Date().toISOString(),
       action: 'single_tap',
@@ -271,8 +250,8 @@ export default function ExerciseScreen() {
       
       // Emit interval_skipped event
       emitAnalyticsEvent('interval_skipped', {
-        hub: hubId,
-        exercise_id: exercise?.name,
+        hub,
+        exercise_id: exercises[currentStepIndex]?.id,
         step_index: currentStepIndex,
         timestamp: new Date().toISOString(),
       });
@@ -281,7 +260,12 @@ export default function ExerciseScreen() {
       const nextIndex = currentStepIndex + 1;
       
       if (nextIndex >= exercises.length) {
-        setShowFeedback(true);
+        const duration = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000);
+        onComplete({
+          completed: true,
+          duration_seconds: duration,
+          steps_completed: exercises.length,
+        });
       } else {
         setCurrentStepIndex(nextIndex);
         startStep(nextIndex);
@@ -294,7 +278,12 @@ export default function ExerciseScreen() {
     const nextIndex = currentStepIndex + 1;
     
     if (nextIndex >= exercises.length) {
-      setShowFeedback(true);
+      const duration = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000);
+      onComplete({
+        completed: true,
+        duration_seconds: duration,
+        steps_completed: exercises.length,
+      });
     } else {
       // Show interval before next step
       setShowInterval(true);
@@ -306,17 +295,23 @@ export default function ExerciseScreen() {
   const handleFastForwardFinal = () => {
     // Emit analytics event
     emitAnalyticsEvent('exercise_fastforward', {
-      hub: hubId,
-      exercise_id: exercise?.name,
+      hub,
+      exercise_id: exercises[currentStepIndex]?.id,
       step_index: currentStepIndex,
       timestamp: new Date().toISOString(),
       action: 'double_tap',
     });
 
-    // Clear all timers and jump to feedback
+    // Clear all timers and complete
     clearAllTimers();
     setShowInterval(false);
-    setShowFeedback(true);
+    
+    const duration = Math.floor((new Date().getTime() - startTimeRef.current.getTime()) / 1000);
+    onComplete({
+      completed: true,
+      duration_seconds: duration,
+      steps_completed: currentStepIndex + 1,
+    });
   };
 
   const handleFastForwardLongPress = () => {
@@ -327,8 +322,8 @@ export default function ExerciseScreen() {
 
     // Emit analytics event
     emitAnalyticsEvent('exercise_fastforward', {
-      hub: hubId,
-      exercise_id: exercise?.name,
+      hub,
+      exercise_id: exercises[currentStepIndex]?.id,
       step_index: currentStepIndex,
       timestamp: new Date().toISOString(),
       action: 'long_press',
@@ -350,100 +345,7 @@ export default function ExerciseScreen() {
     }
 
     clearAllTimers();
-    router.back();
-  };
-
-  const handleFeedback = async (rating: number) => {
-    console.log('User feedback:', rating);
-    
-    // Save exercise completion to database
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      // Calculate blossoms earned
-      let blossomsEarned = 5; // Base for completing exercise
-      
-      if (user) {
-        // Check if this is first exercise of the day
-        const isFirstToday = await checkFirstExerciseOfDay(user.id);
-        if (isFirstToday) {
-          blossomsEarned += 15; // First exercise of the day bonus
-        }
-        
-        // Save exercise completion
-        await supabase.from('exercises_completed').insert([
-          {
-            user_id: user.id,
-            hub_name: hubId as string,
-            exercise_name: exercise?.name || '',
-            exercise_index: Number(exerciseIndex),
-            rating,
-            blossoms_earned: blossomsEarned,
-          },
-        ]);
-        
-        // Award blossoms
-        await awardBlossoms(user.id, blossomsEarned, `Completed ${exercise?.name}`);
-        
-        // Update streak
-        await updateStreak(user.id);
-        
-        // Check if user completed all exercises in this hub
-        const isSequenceComplete = await checkHubSequenceCompletion(user.id, hubId as string);
-        
-        if (isSequenceComplete) {
-          // Check if we already recorded this sequence completion
-          const { data: existingSequence } = await supabase
-            .from('hub_sequences_completed')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('hub_name', hubId as string)
-            .limit(1);
-          
-          if (!existingSequence || existingSequence.length === 0) {
-            // Award sequence completion bonus
-            await supabase.from('hub_sequences_completed').insert([
-              {
-                user_id: user.id,
-                hub_name: hubId as string,
-                blossoms_earned: 10,
-              },
-            ]);
-            
-            await awardBlossoms(user.id, 10, `Completed all exercises in ${hubId}`);
-          }
-        }
-        
-        // Check and award badges
-        await checkAndAwardBadges(user.id);
-        
-        // Sync progress to Supabase
-        await syncProgressToSupabase();
-      } else {
-        // User not logged in - save locally only
-        await updateLocalProgressAfterExercise(
-          hubId as string,
-          exercise?.name || '',
-          Number(exerciseIndex),
-          rating,
-          blossomsEarned
-        );
-      }
-    } catch (error) {
-      console.error('Error saving exercise completion:', error);
-      
-      // Fallback to local storage
-      await updateLocalProgressAfterExercise(
-        hubId as string,
-        exercise?.name || '',
-        Number(exerciseIndex),
-        rating,
-        5
-      );
-    }
-    
-    // Return to home
-    router.push('/(tabs)/(home)/' as any);
+    onClose();
   };
 
   const emitAnalyticsEvent = (eventName: string, payload: any) => {
@@ -451,9 +353,9 @@ export default function ExerciseScreen() {
     // TODO: Send to analytics service
   };
 
-  if (!exercise || exercises.length === 0) {
+  if (exercises.length === 0) {
     return (
-      <BlossomBackground showBlossoms={showBlossoms}>
+      <BlossomBackground showBlossoms={true}>
         <View style={styles.container}>
           <Text style={styles.sessionCompleteText}>Session Complete</Text>
         </View>
@@ -477,17 +379,15 @@ export default function ExerciseScreen() {
   // Show 5-second interval screen
   if (showInterval) {
     return (
-      <BlossomBackground showBlossoms={showBlossoms} showPaperTexture={false}>
+      <BlossomBackground showBlossoms={true} showPaperTexture={false}>
         <View style={styles.container}>
           {/* B&W Photo Background */}
-          {showBackgroundPhotos && (
-            <ImageBackground
-              source={{ uri: BW_PHOTOS[hubId as string] || BW_PHOTOS['stop-smoking'] }}
-              style={styles.photoBackground}
-              blurRadius={8}
-              imageStyle={styles.photoImage}
-            />
-          )}
+          <ImageBackground
+            source={{ uri: BW_PHOTOS[hub] || BW_PHOTOS['default'] }}
+            style={styles.photoBackground}
+            blurRadius={8}
+            imageStyle={styles.photoImage}
+          />
 
           {/* Top-right controls */}
           <View style={styles.controls}>
@@ -521,48 +421,17 @@ export default function ExerciseScreen() {
     );
   }
 
-  // Show feedback screen
-  if (showFeedback) {
-    return (
-      <BlossomBackground showBlossoms={showBlossoms}>
-        <View style={styles.container}>
-          <Animated.View style={[styles.feedbackContainer, { opacity: fadeAnim }]}>
-            <Text style={styles.feedbackQuestion}>How do you feel now?</Text>
-            <View style={styles.dotsContainer}>
-              {[1, 2, 3, 4, 5].map((rating) => (
-                <TouchableOpacity
-                  key={rating}
-                  style={styles.dot}
-                  onPress={() => handleFeedback(rating)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.dotInner} />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={styles.feedbackHint}>Tap a dot to save</Text>
-            <Text style={styles.creditText}>
-              Exercise adapted from: {exercise.credit}
-            </Text>
-          </Animated.View>
-        </View>
-      </BlossomBackground>
-    );
-  }
-
   // Show exercise screen
   return (
-    <BlossomBackground showBlossoms={showBlossoms} showPaperTexture={false}>
+    <BlossomBackground showBlossoms={true} showPaperTexture={false}>
       <View style={styles.container}>
         {/* B&W Photo Background (blurred, low opacity, desaturated) */}
-        {showBackgroundPhotos && (
-          <ImageBackground
-            source={{ uri: BW_PHOTOS[hubId as string] || BW_PHOTOS['stop-smoking'] }}
-            style={styles.photoBackground}
-            blurRadius={8}
-            imageStyle={styles.photoImage}
-          />
-        )}
+        <ImageBackground
+          source={{ uri: BW_PHOTOS[hub] || BW_PHOTOS['default'] }}
+          style={styles.photoBackground}
+          blurRadius={8}
+          imageStyle={styles.photoImage}
+        />
 
         {/* Top-right controls - 3 icons horizontally aligned */}
         <View style={styles.controls}>
@@ -734,58 +603,6 @@ const styles = StyleSheet.create({
     color: colors.black,
     textAlign: 'center',
     letterSpacing: 0.5,
-  },
-  feedbackContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  feedbackQuestion: {
-    fontSize: 24,
-    fontWeight: '300',
-    color: colors.black,
-    textAlign: 'center',
-    marginBottom: 48,
-    letterSpacing: 0.3,
-  },
-  dotsContainer: {
-    flexDirection: 'row',
-    gap: 24,
-    marginBottom: 24,
-  },
-  dot: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: colors.black,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-  },
-  dotInner: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.black,
-  },
-  feedbackHint: {
-    fontSize: 12,
-    fontWeight: '300',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.2,
-    marginBottom: 60,
-  },
-  creditText: {
-    position: 'absolute',
-    bottom: 40,
-    fontSize: 10,
-    fontWeight: '300',
-    color: colors.textSecondary,
-    textAlign: 'center',
-    letterSpacing: 0.2,
   },
   sessionCompleteText: {
     fontSize: 24,
