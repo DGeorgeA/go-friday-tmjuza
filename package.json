@@ -1,5 +1,6 @@
+
 {
-  "name": "Natively",
+  "name": "GoFriday",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -7,7 +8,7 @@
     "android": "EXPO_NO_TELEMETRY=1 expo start --android",
     "ios": "EXPO_NO_TELEMETRY=1 expo start --ios",
     "web": "EXPO_NO_TELEMETRY=1 expo start --web",
-    "build:web": "expo export -p web && npx workbox generateSW workbox-config.js",
+    "build:web": "expo export -p web --output-dir dist && cp public/_redirects dist/ && cp public/CNAME dist/",
     "build:android": "expo prebuild -p android",
     "lint": "eslint ."
   },

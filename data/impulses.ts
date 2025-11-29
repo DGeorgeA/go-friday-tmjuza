@@ -38,9 +38,9 @@ export const impulses: Impulse[] = [
     description: 'Anchor in your breathing',
   },
   {
-    id: 'unplug-refocus',
-    name: 'Unplug & Refocus',
-    icon: 'phone-disabled', // Material icon
+    id: 'stop-doomscrolling',
+    name: 'Stop Doomscrolling',
+    icon: 'smartphone', // Material icon - mobile phone
     color: '#1A1A1A',
     description: 'Reclaim your attention',
   },
@@ -372,8 +372,8 @@ export const impulseHubs: Record<string, ImpulseHub> = {
       },
     ],
   },
-  'unplug-refocus': {
-    impulse: 'unplug-refocus',
+  'stop-doomscrolling': {
+    impulse: 'stop-doomscrolling',
     exercises: [
       {
         name: 'Micro-Pause',

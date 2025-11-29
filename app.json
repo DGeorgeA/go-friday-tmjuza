@@ -1,7 +1,8 @@
+
 {
   "expo": {
-    "name": "Friday Calm",
-    "slug": "Friday Calm",
+    "name": "GoFriday",
+    "slug": "gofriday",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -10,11 +11,11 @@
     "splash": {
       "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#F7D7E3"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.Natively",
+      "bundleIdentifier": "com.gofriday.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -22,27 +23,37 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#F7D7E3"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.Natively"
+      "package": "com.gofriday.app"
     },
     "web": {
       "favicon": "./assets/images/final_quest_240x240.png",
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static",
+      "build": {
+        "babel": {
+          "include": ["@expo/vector-icons"]
+        }
+      }
     },
     "plugins": [
       "expo-font",
       "expo-router",
       "expo-web-browser"
     ],
-    "scheme": "natively",
+    "scheme": "gofriday",
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "router": {}
-    }
-  },
-  "scheme": "Friday Calm"
+      "router": {
+        "origin": "https://gofriday.shop"
+      }
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
 }

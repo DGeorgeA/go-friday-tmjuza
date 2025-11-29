@@ -16,7 +16,8 @@ import { colors } from '@/styles/commonStyles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Timing constants (in milliseconds)
-const STEP_BASE_MS = 2000; // 2 seconds base
+const STEP_BASE_MS = 5000; // 5 seconds base (increased from 2 seconds)
+const INTERVAL_DURATION_MS = 5000; // 5 seconds interval between tasks
 const ACCENT_PINK = '#FF8DAA';
 const PHOTO_OPACITY = 0.10;
 
@@ -27,7 +28,7 @@ const BW_PHOTOS: Record<string, string> = {
   eat_awareness: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80&sat=-100',
   return_to_calm: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80&sat=-100',
   steady_breath: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80&sat=-100',
-  unplug_refocus: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80&sat=-100',
+  stop_doomscrolling: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80&sat=-100',
   default: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&sat=-100',
 };
 
@@ -266,22 +267,22 @@ const completionStyles = StyleSheet.create({
     zIndex: 10,
   },
   messageText: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '300',
     color: colors.black,
     textAlign: 'center',
-    letterSpacing: 1,
-    lineHeight: 42,
-    marginBottom: 24,
+    letterSpacing: 1.5,
+    lineHeight: 48,
+    marginBottom: 32,
     fontFamily: Platform.OS === 'ios' ? 'Hiragino Sans' : 'Noto Sans JP',
   },
   messageSubtext: {
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: '300',
     color: colors.textSecondary,
     textAlign: 'center',
-    letterSpacing: 0.3,
-    lineHeight: 22,
+    letterSpacing: 0.5,
+    lineHeight: 28,
   },
   dismissButton: {
     position: 'absolute',
@@ -290,7 +291,7 @@ const completionStyles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   dismissText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '300',
     color: colors.textSecondary,
     letterSpacing: 0.3,
@@ -305,8 +306,10 @@ export default function ExercisePlayer({
 }: ExercisePlayerProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [speedMultiplier, setSpeedMultiplier] = useState(1); // 1, 2, or 3
-  const [currentDuration, setCurrentDuration] = useState(exercises[0]?.baseDurationSeconds * 1000 || 2000);
-  const [remainingSeconds, setRemainingSeconds] = useState(exercises[0]?.baseDurationSeconds || 2);
+  const [currentDuration, setCurrentDuration] = useState(exercises[0]?.baseDurationSeconds * 1000 || STEP_BASE_MS);
+  const [remainingSeconds, setRemainingSeconds] = useState(exercises[0]?.baseDurationSeconds || 5);
+  const [isInInterval, setIsInInterval] = useState(false);
+  const [intervalRemaining, setIntervalRemaining] = useState(5);
   const [isComplete, setIsComplete] = useState(false);
   const [showCompletionPopup, setShowCompletionPopup] = useState(false);
   const [settings, setSettings] = useState<Settings>({
@@ -320,6 +323,7 @@ export default function ExercisePlayer({
   const breatheAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<Date>(new Date());
@@ -398,11 +402,12 @@ export default function ExercisePlayer({
 
   const clearAllTimers = () => {
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
+    if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
     if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
   };
 
   const getCurrentDuration = (stepIndex: number): number => {
-    const baseSeconds = exercises[stepIndex]?.baseDurationSeconds || 2;
+    const baseSeconds = exercises[stepIndex]?.baseDurationSeconds || 5;
     return baseSeconds * speedMultiplier;
   };
 
@@ -413,6 +418,7 @@ export default function ExercisePlayer({
     }
 
     setStepIndex(stepIndex);
+    setIsInInterval(false);
 
     const durationSeconds = getCurrentDuration(stepIndex);
     setRemainingSeconds(durationSeconds);
@@ -435,14 +441,34 @@ export default function ExercisePlayer({
   };
 
   const handleStepComplete = (stepIndex: number) => {
-    // Check if there's a next step - NO MORE 5-SECOND INTERVAL
+    // Check if there's a next step
     if (stepIndex + 1 < exercises.length) {
-      // Directly start next step
-      startStep(stepIndex + 1);
+      // Enter 5-second interval
+      startInterval(stepIndex + 1);
     } else {
       // No more steps - complete session
       handleSessionComplete();
     }
+  };
+
+  const startInterval = (nextStepIndex: number) => {
+    setIsInInterval(true);
+    setIntervalRemaining(5);
+
+    // Clear any existing timer
+    if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
+
+    let remaining = 5;
+    intervalTimerRef.current = setInterval(() => {
+      remaining -= 1;
+      setIntervalRemaining(remaining);
+
+      if (remaining <= 0) {
+        if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
+        // Auto-advance to next step
+        startStep(nextStepIndex);
+      }
+    }, 1000);
   };
 
   const handleSessionComplete = () => {
@@ -546,22 +572,35 @@ export default function ExercisePlayer({
   };
 
   const handleFastForwardSingle = () => {
-    emitAnalyticsEvent('exercise_fastforward', {
-      hub,
-      exercise_id: exercises[stepIndex]?.id,
-      fromStep: stepIndex,
-      toStep: stepIndex + 1,
-      timestamp: new Date().toISOString(),
-    });
+    if (isInInterval) {
+      // Skip interval and go to next step
+      emitAnalyticsEvent('interval_skipped', {
+        hub,
+        next_exercise_id: exercises[stepIndex]?.id,
+        timestamp: new Date().toISOString(),
+      });
 
-    clearAllTimers();
-    
-    if (stepIndex + 1 < exercises.length) {
-      // Jump to next step immediately
-      startStep(stepIndex + 1);
+      clearAllTimers();
+      startStep(stepIndex);
     } else {
-      // Complete session
-      handleSessionComplete();
+      // Skip current step
+      emitAnalyticsEvent('exercise_fastforward', {
+        hub,
+        exercise_id: exercises[stepIndex]?.id,
+        fromStep: stepIndex,
+        toStep: stepIndex + 1,
+        timestamp: new Date().toISOString(),
+      });
+
+      clearAllTimers();
+      
+      if (stepIndex + 1 < exercises.length) {
+        // Enter interval before next step
+        startInterval(stepIndex + 1);
+      } else {
+        // Complete session
+        handleSessionComplete();
+      }
     }
   };
 
@@ -660,7 +699,59 @@ export default function ExercisePlayer({
   });
 
   const currentStep = exercises[stepIndex];
+  const nextStep = stepIndex + 1 < exercises.length ? exercises[stepIndex + 1] : null;
   const photoUrl = BW_PHOTOS[hub] || BW_PHOTOS.default;
+
+  // Show interval screen
+  if (isInInterval) {
+    return (
+      <View style={styles.container}>
+        {/* B&W Photo Background */}
+        {settings.showBackgroundPhotos && (
+          <ImageBackground
+            source={{ uri: photoUrl }}
+            style={styles.photoBackground}
+            blurRadius={8}
+            imageStyle={styles.photoImage}
+          />
+        )}
+
+        {/* Top-right controls */}
+        <View style={styles.controls}>
+          {/* Fast Forward Button */}
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={handleFastForwardPress}
+            activeOpacity={0.7}
+            accessibilityLabel="Skip interval"
+            accessibilityRole="button"
+          >
+            <Text style={styles.controlIcon}>⏩</Text>
+          </TouchableOpacity>
+
+          {/* Close Button */}
+          <TouchableOpacity
+            style={styles.controlButton}
+            onPress={handleClose}
+            activeOpacity={0.7}
+            accessibilityLabel="Close exercise"
+            accessibilityRole="button"
+          >
+            <Text style={styles.controlIcon}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+          {/* Interval countdown */}
+          <Text style={styles.intervalText}>Next step in {intervalRemaining}...</Text>
+          {nextStep && (
+            <Text style={styles.nextTaskText}>Next: {nextStep.text}</Text>
+          )}
+          <Text style={styles.skipHintText}>Tap ⏩ to skip</Text>
+        </Animated.View>
+      </View>
+    );
+  }
 
   // Show exercise screen
   return (
@@ -743,7 +834,7 @@ export default function ExercisePlayer({
         {/* Current task label */}
         <Text style={styles.currentTaskLabel}>Current task</Text>
 
-        {/* Task text */}
+        {/* Task text - ENLARGED */}
         <Text style={styles.taskText}>{currentStep.text}</Text>
 
         {/* Time left */}
@@ -842,12 +933,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   taskText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '300',
     color: colors.black,
     textAlign: 'center',
-    lineHeight: 32,
-    letterSpacing: 0.3,
+    lineHeight: 38,
+    letterSpacing: 0.5,
     marginBottom: 24,
     paddingHorizontal: 16,
   },
@@ -857,6 +948,31 @@ const styles = StyleSheet.create({
     color: colors.black,
     textAlign: 'center',
     letterSpacing: 0.5,
+  },
+  intervalText: {
+    fontSize: 24,
+    fontWeight: '300',
+    color: colors.black,
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    marginBottom: 16,
+  },
+  nextTaskText: {
+    fontSize: 16,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+    marginBottom: 32,
+    paddingHorizontal: 32,
+  },
+  skipHintText: {
+    fontSize: 12,
+    fontWeight: '300',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+    opacity: 0.6,
   },
   sessionCompleteText: {
     fontSize: 24,

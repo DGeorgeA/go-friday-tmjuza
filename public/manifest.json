@@ -1,25 +1,19 @@
+
 {
-  "name": "Natively",
-  "short_name": "Natively",
+  "name": "GoFriday - Calm Your Impulses",
+  "short_name": "GoFriday",
+  "description": "Relax into a Friday-evening calm. Manage impulses with mindfulness and breathing exercises.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7D7E3",
+  "theme_color": "#FF8DAA",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "logo512x512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/assets/images/final_quest_240x240.png",
+      "sizes": "240x240",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#d6d6d6",
-  "background_color": "#242424"
+  ]
 }

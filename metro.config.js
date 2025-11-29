@@ -1,12 +1,16 @@
+
 const { getDefaultConfig } = require('expo/metro-config');
-const { FileStore } = require('metro-cache');
-const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
-// Use turborepo to restore the cache when possible
-config.cacheStores = [
-    new FileStore({ root: path.join(__dirname, 'node_modules', '.cache', 'metro') }),
-  ];
+// Enable web support
+config.resolver.sourceExts.push('web.tsx', 'web.ts', 'web.jsx', 'web.js');
+
+// Optimize for production
+config.transformer.minifierConfig = {
+  compress: {
+    drop_console: true,
+  },
+};
 
 module.exports = config;
