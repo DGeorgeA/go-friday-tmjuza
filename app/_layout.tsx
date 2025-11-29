@@ -16,7 +16,6 @@ import {
 } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
 import { WidgetProvider } from "@/contexts/WidgetContext";
-import { supabase } from "@/app/integrations/supabase/client";
 import {
   NotoSerifJP_400Regular,
   NotoSerifJP_700Bold,
@@ -52,24 +51,37 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
-    // Check authentication status
+    // Check authentication status - lazy load supabase to avoid build errors
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Always start at home - users can access the app without auth
-      setInitialRoute('(tabs)');
+      try {
+        // Dynamically import supabase only when needed and in async context
+        const { initializeSupabaseAsync } = await import("@/app/integrations/supabase/client");
+        const supabase = await initializeSupabaseAsync();
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        console.log('Auth check complete:', session?.user?.email || 'No session');
+        
+        // Always start at home - users can access the app without auth
+        setInitialRoute('(tabs)');
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          console.log('Auth state changed:', _event, session?.user?.email);
+        });
+
+        // Cleanup subscription on unmount
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        // Still allow app to start even if auth check fails
+        setInitialRoute('(tabs)');
+      }
     };
 
     checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state changed:', _event, session?.user?.email);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
   React.useEffect(() => {

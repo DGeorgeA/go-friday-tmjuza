@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, KeyboardAvoidingView, Platform, ScrollView, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { colors, buttonStyles } from '@/styles/commonStyles';
@@ -16,6 +16,10 @@ export default function SignUpScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
 
+  const handleContinue = useCallback(() => {
+    router.replace('/(tabs)/(home)/' as any);
+  }, [router]);
+
   React.useEffect(() => {
     if (showSuccess) {
       Animated.timing(fadeAnim, {
@@ -31,7 +35,7 @@ export default function SignUpScreen() {
 
       return () => clearTimeout(timer);
     }
-  }, [showSuccess, fadeAnim]);
+  }, [showSuccess, fadeAnim, handleContinue]);
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -89,10 +93,6 @@ export default function SignUpScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleContinue = () => {
-    router.replace('/(tabs)/(home)/' as any);
   };
 
   if (showSuccess) {

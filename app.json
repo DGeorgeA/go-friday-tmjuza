@@ -1,8 +1,7 @@
-
 {
   "expo": {
-    "name": "GoFriday",
-    "slug": "gofriday",
+    "name": "Friday Calm",
+    "slug": "Friday Calm",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -34,7 +33,9 @@
       "output": "static",
       "build": {
         "babel": {
-          "include": ["@expo/vector-icons"]
+          "include": [
+            "@expo/vector-icons"
+          ]
         }
       }
     },
@@ -55,5 +56,6 @@
     "assetBundlePatterns": [
       "**/*"
     ]
-  }
+  },
+  "scheme": "Friday Calm"
 }
