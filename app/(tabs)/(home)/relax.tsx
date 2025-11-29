@@ -16,7 +16,7 @@ export default function RelaxIntoFridayScreen() {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   return (
     <BlossomBackground>

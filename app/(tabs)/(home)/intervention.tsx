@@ -46,7 +46,7 @@ export default function InterventionScreen() {
         ])
       ).start();
     });
-  }, []);
+  }, [blossomAnims, fadeAnim]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -84,7 +84,7 @@ export default function InterventionScreen() {
     } else {
       breatheAnim.stopAnimation();
     }
-  }, [isPlaying]);
+  }, [isPlaying, breatheAnim]);
 
   const handleFeedback = (rating: number) => {
     console.log('User feedback:', rating);

@@ -17,7 +17,7 @@ export default function HomeScreen() {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   const handleImpulsePress = (impulseId: string) => {
     // Direct launch to intervention (micro tier - index 0)

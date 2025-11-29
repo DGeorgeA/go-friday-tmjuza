@@ -22,7 +22,7 @@ export default function PanicButtonScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   useEffect(() => {
     if (isActive) {
@@ -72,7 +72,7 @@ export default function PanicButtonScreen() {
     } else {
       pulseAnim.setValue(1);
     }
-  }, [isActive, phase]);
+  }, [isActive, phase, pulseAnim]);
 
   const handleActivate = () => {
     setIsActive(true);

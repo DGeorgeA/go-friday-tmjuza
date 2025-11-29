@@ -27,7 +27,7 @@ export default function BlossomBackground({ children }: BlossomBackgroundProps) 
         ])
       ).start();
     });
-  }, []);
+  }, [blossomAnims]);
 
   return (
     <View style={styles.container}>

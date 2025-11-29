@@ -45,7 +45,7 @@ export default function BreathingScreen() {
         ])
       ).start();
     });
-  }, []);
+  }, [blossomAnims, fadeAnim]);
 
   useEffect(() => {
     if (!pattern || !isPlaying) return;
@@ -104,7 +104,7 @@ export default function BreathingScreen() {
         useNativeDriver: true,
       }).start();
     }
-  }, [phase, pattern]);
+  }, [phase, pattern, breatheAnim]);
 
   const handleFeedback = (rating: number) => {
     console.log('User feedback:', rating);
