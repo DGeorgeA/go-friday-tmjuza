@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Friday Calm",
@@ -27,31 +28,13 @@
       "edgeToEdgeEnabled": true,
       "package": "com.gofriday.app"
     },
-    "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
-      "bundler": "metro",
-      "output": "static",
-      "build": {
-        "babel": {
-          "include": [
-            "@expo/vector-icons"
-          ]
-        }
-      }
-    },
     "plugins": [
       "expo-font",
-      "expo-router",
-      "expo-web-browser"
+      "expo-router"
     ],
     "scheme": "gofriday",
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "router": {
-        "origin": "https://gofriday.shop"
-      }
     },
     "assetBundlePatterns": [
       "**/*"

@@ -34,7 +34,7 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
   // Update widget state whenever what we want to show changes
   React.useEffect(() => {
     // Only run on iOS with ExtensionStorage available
-    if (Platform.OS === 'ios' && ExtensionStorage && typeof window !== 'undefined') {
+    if (Platform.OS === 'ios' && ExtensionStorage) {
       try {
         // set widget_state to null if we want to reset the widget
         // storage?.set("widget_state", null);
@@ -49,7 +49,7 @@ export function WidgetProvider({ children }: { children: React.ReactNode }) {
 
   const refreshWidget = useCallback(() => {
     // Only run on iOS with ExtensionStorage available
-    if (Platform.OS === 'ios' && ExtensionStorage && typeof window !== 'undefined') {
+    if (Platform.OS === 'ios' && ExtensionStorage) {
       try {
         ExtensionStorage.reloadWidget();
       } catch (error) {

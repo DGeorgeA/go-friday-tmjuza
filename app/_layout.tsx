@@ -2,7 +2,7 @@
 import "react-native-reanimated";
 import React, { useEffect, useState } from "react";
 import { useFonts } from "expo-font";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -24,6 +24,7 @@ import {
   NotoSansJP_300Light,
   NotoSansJP_400Regular,
 } from "@expo-google-fonts/noto-sans-jp";
+import { supabase } from "@/app/integrations/supabase/client";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -51,13 +52,9 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
-    // Check authentication status - lazy load supabase to avoid build errors
+    // Check authentication status
     const checkAuth = async () => {
       try {
-        // Dynamically import supabase only when needed and in async context
-        const { initializeSupabaseAsync } = await import("@/app/integrations/supabase/client");
-        const supabase = await initializeSupabaseAsync();
-        
         const { data: { session } } = await supabase.auth.getSession();
         
         console.log('Auth check complete:', session?.user?.email || 'No session');
