@@ -289,21 +289,32 @@ export default function ExerciseScreen() {
           imageStyle={styles.photoImage}
         />
 
-        {/* Top-right controls - Always visible */}
+        {/* Top-right controls - Always visible with Slowdown/Pause button */}
         <View style={styles.controls}>
+          {/* Slowdown/Pause Button - Prominent circular button */}
           <TouchableOpacity
-            style={[styles.controlButton, isPaused && styles.controlButtonPaused]}
+            style={[styles.pauseButton, isPaused && styles.pauseButtonActive]}
             onPress={handlePause}
             activeOpacity={0.7}
           >
-            <IconSymbol
-              android_material_icon_name={isPaused ? 'play-arrow' : 'pause'}
-              ios_icon_name={isPaused ? 'play.fill' : 'pause.fill'}
-              size={24}
-              color={isPaused ? colors.blossomPink : colors.black}
-            />
+            <View style={styles.pauseIconContainer}>
+              {isPaused ? (
+                <IconSymbol
+                  android_material_icon_name="play-arrow"
+                  ios_icon_name="play.fill"
+                  size={28}
+                  color={colors.blossomPink}
+                />
+              ) : (
+                <View style={styles.pauseIcon}>
+                  <View style={styles.pauseBar} />
+                  <View style={styles.pauseBar} />
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
 
+          {/* Fast Forward Button */}
           <TouchableOpacity
             style={styles.controlButton}
             onPress={handleFastForward}
@@ -317,6 +328,7 @@ export default function ExerciseScreen() {
             />
           </TouchableOpacity>
 
+          {/* Close Button */}
           <TouchableOpacity
             style={styles.controlButton}
             onPress={handleClose}
@@ -396,6 +408,42 @@ const styles = StyleSheet.create({
     gap: 12,
     zIndex: 10,
   },
+  pauseButton: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.black,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  pauseButtonActive: {
+    borderColor: colors.blossomPink,
+    borderWidth: 2.5,
+    backgroundColor: '#FFF5F8',
+  },
+  pauseIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pauseIcon: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pauseBar: {
+    width: 4,
+    height: 18,
+    backgroundColor: colors.black,
+    borderRadius: 2,
+  },
   controlButton: {
     width: 44,
     height: 44,
@@ -405,10 +453,6 @@ const styles = StyleSheet.create({
     borderColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  controlButtonPaused: {
-    borderColor: colors.blossomPink,
-    borderWidth: 2,
   },
   pauseOverlay: {
     position: 'absolute',
