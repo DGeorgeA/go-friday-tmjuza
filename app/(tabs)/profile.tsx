@@ -139,7 +139,7 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <BlossomBackground>
+      <BlossomBackground showPaperTexture={true}>
         <View style={styles.container}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -194,7 +194,7 @@ export default function ProfileScreen() {
     : 100;
 
   return (
-    <BlossomBackground>
+    <BlossomBackground showPaperTexture={true}>
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -494,8 +494,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 12,
     height: 12,
-    backgroundColor: colors.iconGray,
+    backgroundColor: colors.blossomPink,
     borderRadius: 6,
+    opacity: 0.6,
   },
   statsGrid: {
     flexDirection: 'row',

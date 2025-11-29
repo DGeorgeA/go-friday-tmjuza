@@ -1,71 +1,112 @@
 
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated, ImageBackground } from 'react-native';
 import { colors } from '@/styles/commonStyles';
 
 interface BlossomBackgroundProps {
   children: React.ReactNode;
+  showPaperTexture?: boolean;
 }
 
-export default function BlossomBackground({ children }: BlossomBackgroundProps) {
-  const blossomAnims = useRef([...Array(12)].map(() => new Animated.Value(0))).current;
+export default function BlossomBackground({ children, showPaperTexture = true }: BlossomBackgroundProps) {
+  const blossomAnims = useRef([...Array(6)].map(() => ({
+    translateY: new Animated.Value(0),
+    rotate: new Animated.Value(0),
+    scale: new Animated.Value(1),
+    opacity: new Animated.Value(0),
+  }))).current;
 
   useEffect(() => {
     blossomAnims.forEach((anim, index) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 5000 + index * 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 5000 + index * 800,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+      // Stagger the start times
+      setTimeout(() => {
+        Animated.loop(
+          Animated.parallel([
+            // Falling animation
+            Animated.timing(anim.translateY, {
+              toValue: 800,
+              duration: 8000 + index * 1000,
+              useNativeDriver: true,
+            }),
+            // Rotation animation
+            Animated.timing(anim.rotate, {
+              toValue: 360,
+              duration: 8000 + index * 1000,
+              useNativeDriver: true,
+            }),
+            // Scale animation (subtle depth)
+            Animated.sequence([
+              Animated.timing(anim.scale, {
+                toValue: 1.05,
+                duration: 4000 + index * 500,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.scale, {
+                toValue: 0.9,
+                duration: 4000 + index * 500,
+                useNativeDriver: true,
+              }),
+            ]),
+            // Opacity animation
+            Animated.sequence([
+              Animated.timing(anim.opacity, {
+                toValue: 0.15 + (index % 2) * 0.05, // 15-20% opacity
+                duration: 2000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(anim.opacity, {
+                toValue: 0.1,
+                duration: 6000 + index * 1000,
+                useNativeDriver: true,
+              }),
+            ]),
+          ])
+        ).start();
+      }, index * 1500);
     });
-  }, [blossomAnims]);
+  }, []);
 
   return (
     <View style={styles.container}>
-      {/* Abstract grayscale blossom shapes */}
+      {/* Paper texture overlay (very subtle) */}
+      {showPaperTexture && (
+        <View style={styles.paperTexture} />
+      )}
+      
+      {/* Pink blossom leaves */}
       {blossomAnims.map((anim, index) => (
-        <React.Fragment key={index}>
-          <Animated.View
-            style={[
-              styles.blossom,
-              {
-                left: `${(index * 13) % 95}%`,
-                top: `${(index * 11) % 85}%`,
-                opacity: anim.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.08, 0.12, 0.08], // 8-12% opacity
-                }),
-                transform: [
-                  {
-                    translateY: anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 150],
-                    }),
-                  },
-                  {
-                    rotate: anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0deg', '180deg'],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            {/* Abstract circular shape */}
-            <View style={styles.abstractShape} />
-          </Animated.View>
-        </React.Fragment>
+        <Animated.View
+          key={index}
+          style={[
+            styles.blossomLeaf,
+            {
+              left: `${10 + (index * 15) % 80}%`,
+              top: -50,
+              opacity: anim.opacity,
+              transform: [
+                { translateY: anim.translateY },
+                {
+                  rotate: anim.rotate.interpolate({
+                    inputRange: [0, 360],
+                    outputRange: ['0deg', '360deg'],
+                  }),
+                },
+                { scale: anim.scale },
+              ],
+            },
+          ]}
+        >
+          {/* Sakura petal shape */}
+          <View style={styles.petalContainer}>
+            <View style={[styles.petal, styles.petal1]} />
+            <View style={[styles.petal, styles.petal2]} />
+            <View style={[styles.petal, styles.petal3]} />
+            <View style={[styles.petal, styles.petal4]} />
+            <View style={[styles.petal, styles.petal5]} />
+          </View>
+        </Animated.View>
       ))}
+      
       {children}
     </View>
   );
@@ -76,15 +117,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
-  blossom: {
+  paperTexture: {
     position: 'absolute',
-    width: 40,
-    height: 40,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)', // Very subtle paper grain effect
+    opacity: 0.4,
   },
-  abstractShape: {
-    width: 40,
-    height: 40,
-    backgroundColor: colors.blossomGray,
-    borderRadius: 20,
+  blossomLeaf: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+  },
+  petalContainer: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  petal: {
+    position: 'absolute',
+    width: 12,
+    height: 18,
+    backgroundColor: colors.blossomPink,
+    borderRadius: 12,
+  },
+  petal1: {
+    top: 0,
+    left: 9,
+  },
+  petal2: {
+    top: 6,
+    left: 18,
+    transform: [{ rotate: '72deg' }],
+  },
+  petal3: {
+    top: 18,
+    left: 15,
+    transform: [{ rotate: '144deg' }],
+  },
+  petal4: {
+    top: 18,
+    left: 3,
+    transform: [{ rotate: '216deg' }],
+  },
+  petal5: {
+    top: 6,
+    left: 0,
+    transform: [{ rotate: '288deg' }],
   },
 });

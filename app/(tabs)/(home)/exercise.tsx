@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, ImageBackground } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '@/styles/commonStyles';
 import { impulseHubs } from '@/data/impulses';
@@ -14,6 +14,16 @@ import { updateLocalProgressAfterExercise, syncProgressToSupabase } from '@/util
 
 const STEP_DURATION = 2000; // 2 seconds per step
 
+// B&W motivational photo URLs (Unsplash)
+const BW_PHOTOS = [
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Mountain landscape
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80', // Mountain path
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80', // Forest path
+  'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80', // Nature landscape
+  'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80', // Nature scene
+  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80', // Calm interior
+];
+
 export default function ExerciseScreen() {
   const router = useRouter();
   const { hubId, exerciseIndex } = useLocalSearchParams();
@@ -23,11 +33,12 @@ export default function ExerciseScreen() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showPauseOverlay, setShowPauseOverlay] = useState(false);
   
   const breatheAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const blossomAnims = useRef([...Array(8)].map(() => new Animated.Value(0))).current;
   const stepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const photoIndex = useRef(Math.floor(Math.random() * BW_PHOTOS.length)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -35,24 +46,6 @@ export default function ExerciseScreen() {
       duration: 600,
       useNativeDriver: true,
     }).start();
-
-    // Start blossom animations
-    blossomAnims.forEach((anim, index) => {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: 4000 + index * 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: 4000 + index * 500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    });
 
     // Start breathing animation
     Animated.loop(
@@ -99,11 +92,16 @@ export default function ExerciseScreen() {
   };
 
   const handlePause = () => {
-    setIsPaused(!isPaused);
+    const newPausedState = !isPaused;
+    setIsPaused(newPausedState);
+    setShowPauseOverlay(newPausedState);
+    
     if (stepTimerRef.current) {
       clearTimeout(stepTimerRef.current);
     }
-    if (isPaused) {
+    
+    if (!newPausedState) {
+      // Resume
       startAutoProgress();
     }
   };
@@ -228,10 +226,6 @@ export default function ExerciseScreen() {
     router.push('/(tabs)/(home)/' as any);
   };
 
-  const handleTapToExit = () => {
-    handleClose();
-  };
-
   if (!exercise) {
     return (
       <BlossomBackground>
@@ -275,6 +269,9 @@ export default function ExerciseScreen() {
               ))}
             </View>
             <Text style={styles.feedbackHint}>Tap a dot to save</Text>
+            <Text style={styles.creditText}>
+              Exercise adapted from: {exercise.credit}
+            </Text>
           </Animated.View>
         </TouchableOpacity>
       </BlossomBackground>
@@ -282,36 +279,34 @@ export default function ExerciseScreen() {
   }
 
   return (
-    <BlossomBackground>
-      <TouchableOpacity 
-        style={styles.container} 
-        activeOpacity={1}
-        onPress={handleTapToExit}
-      >
-        {/* Top-right controls */}
+    <BlossomBackground showPaperTexture={false}>
+      <View style={styles.container}>
+        {/* B&W Photo Background (blurred, low opacity) */}
+        <ImageBackground
+          source={{ uri: BW_PHOTOS[photoIndex] }}
+          style={styles.photoBackground}
+          blurRadius={8}
+          imageStyle={styles.photoImage}
+        />
+
+        {/* Top-right controls - Always visible */}
         <View style={styles.controls}>
           <TouchableOpacity
-            style={styles.controlButton}
-            onPress={(e) => {
-              e.stopPropagation();
-              handlePause();
-            }}
+            style={[styles.controlButton, isPaused && styles.controlButtonPaused]}
+            onPress={handlePause}
             activeOpacity={0.7}
           >
             <IconSymbol
               android_material_icon_name={isPaused ? 'play-arrow' : 'pause'}
               ios_icon_name={isPaused ? 'play.fill' : 'pause.fill'}
               size={24}
-              color={colors.black}
+              color={isPaused ? colors.blossomPink : colors.black}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleFastForward();
-            }}
+            onPress={handleFastForward}
             activeOpacity={0.7}
           >
             <IconSymbol
@@ -324,10 +319,7 @@ export default function ExerciseScreen() {
 
           <TouchableOpacity
             style={styles.controlButton}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
+            onPress={handleClose}
             activeOpacity={0.7}
           >
             <IconSymbol
@@ -339,33 +331,16 @@ export default function ExerciseScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Grayscale blossom particles */}
-        {blossomAnims.map((anim, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.blossomParticle,
-              {
-                left: `${(index * 15) % 90}%`,
-                top: `${(index * 12) % 80}%`,
-                opacity: anim.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.05, 0.1, 0.05],
-                }),
-                transform: [
-                  {
-                    translateY: anim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0, 100],
-                    }),
-                  },
-                ],
-              },
-            ]}
+        {/* Pause overlay */}
+        {showPauseOverlay && (
+          <TouchableOpacity
+            style={styles.pauseOverlay}
+            onPress={handlePause}
+            activeOpacity={0.9}
           >
-            <View style={styles.particleShape} />
-          </Animated.View>
-        ))}
+            <Text style={styles.pauseText}>Tap to continue</Text>
+          </TouchableOpacity>
+        )}
 
         <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
           {/* Large breathing circle */}
@@ -381,17 +356,17 @@ export default function ExerciseScreen() {
             />
           </View>
 
-          {/* Instruction text */}
+          {/* Instruction text - Zen style */}
           <Text style={styles.instructionText}>
             {exercise.steps[currentStep]}
           </Text>
 
           {/* Credit at bottom */}
           <Text style={styles.creditText}>
-            Source: {exercise.credit}
+            Exercise adapted from: {exercise.credit}
           </Text>
         </Animated.View>
-      </TouchableOpacity>
+      </View>
     </BlossomBackground>
   );
 }
@@ -399,6 +374,19 @@ export default function ExerciseScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  photoBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  photoImage: {
+    opacity: 0.1, // 10% opacity for subtle background
+    resizeMode: 'cover',
   },
   controls: {
     position: 'absolute',
@@ -417,6 +405,27 @@ const styles = StyleSheet.create({
     borderColor: colors.black,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  controlButtonPaused: {
+    borderColor: colors.blossomPink,
+    borderWidth: 2,
+  },
+  pauseOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
+  pauseText: {
+    fontSize: 20,
+    fontWeight: '300',
+    color: colors.black,
+    letterSpacing: 0.5,
   },
   content: {
     flex: 1,
@@ -454,17 +463,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.2,
-  },
-  blossomParticle: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-  },
-  particleShape: {
-    width: 30,
-    height: 30,
-    backgroundColor: colors.blossomGray,
-    borderRadius: 15,
   },
   feedbackContainer: {
     flex: 1,
@@ -507,6 +505,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     letterSpacing: 0.2,
+    marginBottom: 60,
   },
   errorText: {
     fontSize: 15,

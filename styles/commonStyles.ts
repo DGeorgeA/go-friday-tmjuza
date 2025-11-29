@@ -2,17 +2,20 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { Colors } from '@/constants/Colors';
 
-// Monochrome Japanese Zen Theme
+// Japanese Minimalist Theme with Pink Blossom Accent
 export const colors = {
-  // Primary colors - Pure Monochrome
+  // Primary colors - Monochrome base
   white: '#FFFFFF',
   black: '#1A1A1A', // Deep charcoal black
+  
+  // Accent - Soft Blossom Pink (used sparingly)
+  blossomPink: '#FF8DAA',
   
   // Grays for depth and icons
   iconGray: '#4A4A4A', // Black/gray for icons
   textSecondary: '#6B6B6B', // Light gray for secondary text
   border: '#E5E5E5', // Subtle border
-  blossomGray: 'rgba(0, 0, 0, 0.08)', // 8-12% opacity neutral gray for blossoms
+  blossomGray: 'rgba(0, 0, 0, 0.08)', // 8-12% opacity neutral gray for blossoms (legacy)
   
   // Semantic colors
   background: '#FFFFFF',

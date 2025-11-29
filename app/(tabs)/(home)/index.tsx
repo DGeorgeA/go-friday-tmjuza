@@ -87,7 +87,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <BlossomBackground>
+    <BlossomBackground showPaperTexture={true}>
       <View style={styles.container}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
