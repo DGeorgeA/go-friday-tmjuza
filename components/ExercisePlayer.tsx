@@ -23,12 +23,12 @@ const PHOTO_OPACITY = 0.10;
 
 // B&W motivational photo URLs (Unsplash - optimized)
 const BW_PHOTOS: Record<string, string> = {
-  stop_smoking: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&sat=-100',
-  move_body: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80&sat=-100',
-  eat_awareness: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80&sat=-100',
-  return_to_calm: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80&sat=-100',
-  steady_breath: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80&sat=-100',
-  stop_doomscrolling: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80&sat=-100',
+  'stop-smoking': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&sat=-100',
+  'move-body': 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=80&sat=-100',
+  'eat-awareness': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80&sat=-100',
+  'return-calm': 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&q=80&sat=-100',
+  'steady-breath': 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=800&q=80&sat=-100',
+  'stop-doomscrolling': 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=800&q=80&sat=-100',
   default: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&sat=-100',
 };
 
@@ -135,11 +135,15 @@ function CompletionPopup({ visible, onDismiss }: { visible: boolean; onDismiss: 
       });
 
       // Auto-dismiss after 5 seconds
-      setTimeout(() => {
+      const dismissTimer = setTimeout(() => {
         onDismiss();
       }, 5000);
+
+      return () => {
+        clearTimeout(dismissTimer);
+      };
     }
-  }, [visible]);
+  }, [visible, blossomAnims, fadeAnim, onDismiss]);
 
   if (!visible) return null;
 
@@ -306,11 +310,9 @@ export default function ExercisePlayer({
 }: ExercisePlayerProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [speedMultiplier, setSpeedMultiplier] = useState(1); // 1, 2, or 3
-  const [currentDuration, setCurrentDuration] = useState(exercises[0]?.baseDurationSeconds * 1000 || STEP_BASE_MS);
   const [remainingSeconds, setRemainingSeconds] = useState(exercises[0]?.baseDurationSeconds || 5);
   const [isInInterval, setIsInInterval] = useState(false);
   const [intervalRemaining, setIntervalRemaining] = useState(5);
-  const [isComplete, setIsComplete] = useState(false);
   const [showCompletionPopup, setShowCompletionPopup] = useState(false);
   const [settings, setSettings] = useState<Settings>({
     showBackgroundPhotos: true,
@@ -326,7 +328,6 @@ export default function ExercisePlayer({
   const intervalTimerRef = useRef<NodeJS.Timeout | null>(null);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<Date>(new Date());
   const sessionStartTimeRef = useRef<Date>(new Date());
 
   // Load settings and check accessibility
@@ -383,7 +384,7 @@ export default function ExercisePlayer({
     }
 
     // Auto-start first step within 150ms
-    setTimeout(() => {
+    const startTimer = setTimeout(() => {
       if (exercises.length > 0) {
         startStep(0);
         emitAnalyticsEvent('exercise_started', {
@@ -396,6 +397,7 @@ export default function ExercisePlayer({
     }, 50);
 
     return () => {
+      clearTimeout(startTimer);
       clearAllTimers();
     };
   }, []);
@@ -411,18 +413,17 @@ export default function ExercisePlayer({
     return baseSeconds * speedMultiplier;
   };
 
-  const startStep = (stepIndex: number) => {
-    if (stepIndex >= exercises.length) {
+  const startStep = (stepIdx: number) => {
+    if (stepIdx >= exercises.length) {
       handleSessionComplete();
       return;
     }
 
-    setStepIndex(stepIndex);
+    setStepIndex(stepIdx);
     setIsInInterval(false);
 
-    const durationSeconds = getCurrentDuration(stepIndex);
+    const durationSeconds = getCurrentDuration(stepIdx);
     setRemainingSeconds(durationSeconds);
-    startTimeRef.current = new Date();
 
     // Clear any existing timer
     if (stepTimerRef.current) clearInterval(stepTimerRef.current);
@@ -435,23 +436,23 @@ export default function ExercisePlayer({
 
       if (remaining <= 0) {
         if (stepTimerRef.current) clearInterval(stepTimerRef.current);
-        handleStepComplete(stepIndex);
+        handleStepComplete(stepIdx);
       }
     }, 1000);
   };
 
-  const handleStepComplete = (stepIndex: number) => {
+  const handleStepComplete = (stepIdx: number) => {
     // Check if there's a next step
-    if (stepIndex + 1 < exercises.length) {
+    if (stepIdx + 1 < exercises.length) {
       // Enter 5-second interval
-      startInterval(stepIndex + 1);
+      startInterval(stepIdx + 1);
     } else {
       // No more steps - complete session
       handleSessionComplete();
     }
   };
 
-  const startInterval = (nextStepIndex: number) => {
+  const startInterval = (nextStepIdx: number) => {
     setIsInInterval(true);
     setIntervalRemaining(5);
 
@@ -466,7 +467,7 @@ export default function ExercisePlayer({
       if (remaining <= 0) {
         if (intervalTimerRef.current) clearInterval(intervalTimerRef.current);
         // Auto-advance to next step
-        startStep(nextStepIndex);
+        startStep(nextStepIdx);
       }
     }, 1000);
   };
@@ -477,7 +478,6 @@ export default function ExercisePlayer({
       (new Date().getTime() - sessionStartTimeRef.current.getTime()) / 1000
     );
 
-    setIsComplete(true);
     setShowCompletionPopup(true);
 
     emitAnalyticsEvent('exercise_completed', {

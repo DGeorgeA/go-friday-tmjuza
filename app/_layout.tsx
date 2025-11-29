@@ -6,7 +6,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { SystemBars } from "react-native-edge-to-edge";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { useColorScheme, Alert } from "react-native";
+import { useColorScheme, Alert, Platform } from "react-native";
 import { useNetworkState } from "expo-network";
 import {
   DarkTheme,
@@ -24,7 +24,6 @@ import {
   NotoSansJP_300Light,
   NotoSansJP_400Regular,
 } from "@expo-google-fonts/noto-sans-jp";
-import { supabase } from "@/app/integrations/supabase/client";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -44,6 +43,7 @@ export default function RootLayout() {
     NotoSansJP_400Regular,
   });
   const [initialRoute, setInitialRoute] = useState<string | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
     if (loaded) {
@@ -55,12 +55,16 @@ export default function RootLayout() {
     // Check authentication status
     const checkAuth = async () => {
       try {
+        // Dynamically import supabase to avoid initialization issues
+        const { supabase } = await import('@/app/integrations/supabase/client');
+        
         const { data: { session } } = await supabase.auth.getSession();
         
         console.log('Auth check complete:', session?.user?.email || 'No session');
         
         // Always start at home - users can access the app without auth
         setInitialRoute('(tabs)');
+        setAuthInitialized(true);
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -75,6 +79,7 @@ export default function RootLayout() {
         console.error('Error checking auth:', error);
         // Still allow app to start even if auth check fails
         setInitialRoute('(tabs)');
+        setAuthInitialized(true);
       }
     };
 
@@ -93,7 +98,7 @@ export default function RootLayout() {
     }
   }, [networkState.isConnected, networkState.isInternetReachable]);
 
-  if (!loaded || !initialRoute) {
+  if (!loaded || !initialRoute || !authInitialized) {
     return null;
   }
 
@@ -129,7 +134,7 @@ export default function RootLayout() {
         value={colorScheme === "dark" ? CustomDarkTheme : CustomDefaultTheme}
       >
         <WidgetProvider>
-          <GestureHandlerRootView>
+          <GestureHandlerRootView style={{ flex: 1 }}>
             <Stack>
               {/* Auth screens */}
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
